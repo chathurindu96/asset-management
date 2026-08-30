@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { Component, useCallback, useMemo, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { CategoryId, MaintenanceLog, RuleSet, VaultDocument, ViewId } from "./lib/types";
 import { buildAlerts, computeHealth } from "./lib/healthEngine";
@@ -10,6 +10,39 @@ import AssetsView from "./components/AssetsView";
 import VaultView from "./components/VaultView";
 import AlertsView from "./components/AlertsView";
 import BlueprintView from "./components/BlueprintView";
+
+class ErrorBoundary extends Component<
+  { children: ReactNode },
+  { error: Error | null }
+> {
+  state = { error: null as Error | null };
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="flex min-h-screen items-center justify-center p-6">
+          <div className="panel max-w-[560px] p-6">
+            <div className="tech-label flex items-center gap-2 !text-coral">
+              <span className="h-1.5 w-1.5 rounded-full bg-coral pulse-dot-red" /> RUNTIME FAULT ISOLATED
+            </div>
+            <pre className="num mt-4 whitespace-pre-wrap rounded-md border border-line bg-[#0a101d] p-4 text-[12px] leading-relaxed text-coral">
+              {String(this.state.error?.message ?? this.state.error)}
+            </pre>
+            <button
+              onClick={() => location.reload()}
+              className="mt-4 rounded-md border border-amber/60 bg-amber/10 px-4 py-2 text-[12px] font-semibold tracking-wider text-amber hover:bg-amber/20"
+            >
+              RESTART CONSOLE
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default function App() {
   const [view, setView] = useState<ViewId>("overview");
@@ -120,6 +153,7 @@ export default function App() {
   /* ------------------------------ render ---------------------------- */
 
   return (
+    <ErrorBoundary>
     <div className="min-h-screen">
       <TopBar
         view={view}
@@ -185,5 +219,6 @@ export default function App() {
 
       <ToastHost toasts={toasts} dismiss={(id) => setToasts((t) => t.filter((x) => x.id !== id))} />
     </div>
+    </ErrorBoundary>
   );
 }

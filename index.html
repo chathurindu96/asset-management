@@ -8,16 +8,54 @@
     <title>ElectroCare — Asset Lifecycle OS</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- fonts load async — never render-blocking; system fallbacks apply instantly -->
     <link
       href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
     <style>
       html, body { margin: 0; background: #0a0f18; }
+      #boot-diag {
+        display: none; position: fixed; inset: 0; z-index: 999; padding: 48px 24px;
+        background: #0a0f18; color: #e9effa; font: 13px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace;
+        overflow: auto;
+      }
+      #boot-diag.on { display: block; }
+      #boot-diag h1 { font-size: 15px; letter-spacing: .12em; color: #ffb224; margin: 0 0 12px; }
+      #boot-diag pre { white-space: pre-wrap; color: #ff9d97; }
     </style>
+    <script>
+      /* boot watchdog — surface any load/runtime fault instead of a blank screen */
+      (function () {
+        var shown = false;
+        function diag(title, err) {
+          if (shown) return;
+          shown = true;
+          var el = document.getElementById("boot-diag");
+          if (!el) return;
+          el.classList.add("on");
+          el.innerHTML =
+            "<h1>ELECTROCARE · BOOT DIAGNOSTIC</h1>" +
+            "<div>" + title + "</div>" +
+            "<pre>" + String(err && (err.message || err)).replace(/</g, "&lt;") + "</pre>" +
+            "<div style='color:#8b99b6;margin-top:12px'>If assets failed to load, rebuild and re-serve the dist folder.</div>";
+        }
+        window.addEventListener("error", function (e) { diag("Runtime error", e.error || e.message); });
+        window.addEventListener("unhandledrejection", function (e) { diag("Unhandled promise rejection", e.reason); });
+        window.addEventListener("load", function () {
+          setTimeout(function () {
+            var root = document.getElementById("root");
+            if (root && !root.childElementCount) diag("App did not mount", new Error("root container is empty after window.load"));
+          }, 4000);
+        });
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <div id="boot-diag"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
