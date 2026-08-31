@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" style="background:#0a0f18;color-scheme:dark">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
 <noscript><link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" /></noscript>
-<style>
+<script type="text/plain" id="app-css">
 :root{
   --bg:#0a0f18; --panel:#0f1624; --panel2:#141d31; --panel3:#1a2440;
   --line:#1e2a44; --line2:#2c3d63; --ink:#e9effa; --dim:#8b99b6; --faint:#5d6c8f;
@@ -98,7 +98,9 @@ main{padding:70px 16px 96px}
 .dash-flow{animation:dashFlow 1.4s linear infinite}
 .float-y{animation:floatY 5s ease-in-out infinite}
 .ring-arc{transition:stroke-dashoffset 1.1s cubic-bezier(.22,.9,.3,1)}
-.skeleton{border-radius:10px;background:linear-gradient(90deg,#111a2c 25%,#182档340 50%,#111a2c 75%);background-size:800px 100%;animation:shimmer 1.4s linear infinite}
+.skeleton{border-radius:10px;background:linear-gradient(90deg,#111a2c 25%,#182340 50%,#111a2c 75%);background-size:800px 100%;animation:shimmer 1.4s linear infinite}
+@keyframes spinK{to{transform:rotate(360deg)}}
+.spin{display:inline-flex;animation:spinK 1s linear infinite}
 
 /* ---------- forms ---------- */
 .inp{height:32px;border-radius:6px;border:1px solid var(--line);background:var(--panel);padding:0 10px;font-size:12px;transition:border-color .2s}
@@ -130,7 +132,7 @@ tr:hover td{background:rgba(20,29,49,.4)}
 .toast{pointer-events:auto;display:flex;align-items:center;gap:10px;border-left:2px solid var(--teal);padding:12px 14px;font-size:13px;box-shadow:0 14px 34px rgba(2,7,18,.6);animation:toastIn .28s cubic-bezier(.22,.9,.3,1);cursor:pointer}
 .modal-bg{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn .2s}
 .modal-bg .scrim{position:absolute;inset:0;background:rgba(4,7,14,.8);backdrop-filter:blur(2px)}
-.modal{position:relative;width:100%;max-width:660px;max-height:88vh;overflow-y-auto;box-shadow:0 30px 80px rgba(0,0,0,.6);animation:pop .24s cubic-bezier(.22,.9,.3,1)}
+.modal{position:relative;width:100%;max-width:660px;max-height:88vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,.6);animation:pop .24s cubic-bezier(.22,.9,.3,1)}
 
 .dropzone{position:relative;overflow:hidden;border:1px dashed var(--line);border-radius:8px;background:rgba(20,29,49,.3);padding:24px;transition:border-color .2s,background .2s}
 .dropzone.over{border-color:rgba(47,224,190,.7);background:rgba(47,224,190,.06)}
@@ -142,9 +144,9 @@ tr:hover td{background:rgba(20,29,49,.4)}
 .hz-row:hover .hz-name{color:var(--ink)}
 .hz-track{position:relative;flex:1;height:10px;border-radius:3px;background:#151e33;box-shadow:inset 0 0 0 1px var(--line);overflow:hidden}
 .hz-days{width:74px;flex:none;text-align:right;font-family:var(--fm);font-size:11px}
-</style>
+</script>
 </head>
-<body>
+<body style="margin:0;background:#0a0f18">
 
 <div id="root">
   <div class="topbar">
@@ -163,6 +165,30 @@ tr:hover td{background:rgba(20,29,49,.4)}
   </div></main>
 </div>
 <div id="toasts"></div>
+
+<script>
+  /* boot watchdog — any fault surfaces on screen instead of a blank page */
+  window.__EC_ERRORS = [];
+  window.addEventListener("error", function (e) {
+    window.__EC_ERRORS.push((e.message || "unknown error") + (e.filename ? " @ " + e.filename + ":" + e.lineno : ""));
+  });
+  window.addEventListener("unhandledrejection", function (e) {
+    window.__EC_ERRORS.push("promise: " + String(e.reason && e.reason.message ? e.reason.message : e.reason));
+  });
+  window.addEventListener("load", function () {
+    setTimeout(function () {
+      if (document.querySelector("#root header.topbar")) return; /* booted fine */
+      var d = document.createElement("div");
+      d.style.cssText = "position:fixed;inset:0;z-index:999;background:#0a0f18;color:#e9effa;font:13px/1.7 ui-monospace,Menlo,Consolas,monospace;padding:48px 24px;overflow:auto";
+      d.innerHTML = "<h1 style='font-size:15px;letter-spacing:.12em;color:#ffb224;margin:0 0 12px'>ELECTROCARE \u00b7 BOOT DIAGNOSTIC</h1>" +
+        "<p style='color:#8b99b6;margin:0 0 14px'>The self-contained UI did not finish booting in this browser.</p>" +
+        "<pre style='white-space:pre-wrap;color:#ff9d97;margin:0'>" +
+        (window.__EC_ERRORS.length ? window.__EC_ERRORS.join("\n").replace(/</g, "&lt;") : "no script errors captured \u2014 check the browser console / CSP settings") +
+        "</pre>";
+      document.body.appendChild(d);
+    }, 1500);
+  });
+</script>
 
 <script type="text/plain" id="src-schema">
 // =====================================================================
@@ -807,6 +833,14 @@ export const buildAlerts = (devices: Device[], logsByDevice: Record<string, Main
 <script>
 "use strict";
 (function () {
+  /* boot stylesheet — injected from the opaque block so the page is fully self-contained */
+  var cssBlock = document.getElementById("app-css");
+  if (cssBlock) {
+    var st = document.createElement("style");
+    st.textContent = cssBlock.textContent;
+    document.head.appendChild(st);
+  }
+
   /* ============================ utils ============================ */
   var $ = function (s, el) { return (el || document).querySelector(s); };
   var $$ = function (s, el) { return Array.prototype.slice.call((el || document).querySelectorAll(s)); };
