@@ -1,0 +1,2036 @@
+<!doctype html>
+<html lang="en" style="background:#0a0f18;color-scheme:dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="ElectroCare — asset lifecycle OS for electrical & electronic equipment: document vault, warranty tracker, telemetry and predictive maintenance." />
+<meta name="theme-color" content="#0a0f18" />
+<title>ElectroCare — Asset Lifecycle OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+<noscript><link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" /></noscript>
+<script type="text/plain" id="app-css">
+:root{
+  --bg:#0a0f18; --panel:#0f1624; --panel2:#141d31; --panel3:#1a2440;
+  --line:#1e2a44; --line2:#2c3d63; --ink:#e9effa; --dim:#8b99b6; --faint:#5d6c8f;
+  --amber:#ffb224; --teal:#2fe0be; --coral:#ff6259; --sky:#6fb3ff; --lime:#a8e05f; --orange:#ff8a3d;
+  --fd:"Chakra Petch","IBM Plex Sans",system-ui,sans-serif;
+  --fb:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --fm:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html{color-scheme:dark}
+html,body{margin:0;background:var(--bg)}
+body{color:var(--ink);font-family:var(--fb);-webkit-font-smoothing:antialiased;min-height:100vh;position:relative}
+body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background-image:
+    radial-gradient(900px 520px at 10% -10%,rgba(47,224,190,.075),transparent 62%),
+    radial-gradient(1100px 640px at 108% 112%,rgba(255,178,36,.06),transparent 62%),
+    radial-gradient(700px 420px at 78% -14%,rgba(111,179,255,.05),transparent 60%),
+    linear-gradient(rgba(111,179,255,.042) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(111,179,255,.042) 1px,transparent 1px);
+  background-size:auto,auto,auto,44px 44px,44px 44px;}
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");}
+::selection{background:rgba(255,178,36,.32);color:#fdf6e5}
+*{scrollbar-width:thin;scrollbar-color:#243352 transparent}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#223154;border-radius:8px;border:2px solid var(--bg)}
+button{font-family:inherit;cursor:pointer;background:none;border:none;color:inherit}
+input,textarea,select{font-family:inherit;outline:none;color:var(--ink)}
+input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible{outline:1px solid rgba(255,178,36,.55);outline-offset:1px}
+
+.panel{background:linear-gradient(180deg,rgba(20,29,49,.92),rgba(15,22,36,.94));border:1px solid var(--line);border-radius:10px}
+.panel-live{transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}
+.panel-live:hover{border-color:var(--line2);transform:translateY(-2px);box-shadow:0 14px 34px rgba(2,7,18,.55)}
+.tech-label{font-family:var(--fd);font-weight:600;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.num{font-family:var(--fm);font-variant-numeric:tabular-nums}
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--fm);font-size:11px;line-height:1;padding:5px 9px;border-radius:5px;border:1px solid var(--line);background:rgba(20,29,49,.6);color:var(--dim);white-space:nowrap}
+.chip svg{flex:none}
+
+/* ---------- shell ---------- */
+.topbar{position:fixed;inset:0 0 auto 0;z-index:40;display:flex;align-items:center;gap:16px;height:56px;border-bottom:1px solid var(--line);background:rgba(10,15,24,.86);backdrop-filter:blur(10px);padding:0 18px}
+.rail{position:fixed;left:0;top:56px;bottom:0;z-index:30;width:64px;display:none;flex-direction:column;border-right:1px solid var(--line);background:rgba(15,22,36,.62);backdrop-filter:blur(10px);padding:16px 10px}
+@media(min-width:1024px){.rail{display:flex}}
+@media(min-width:1280px){.rail{width:192px}}
+.rail-item{position:relative;display:flex;align-items:center;gap:12px;border-radius:8px;padding:10px 12px;width:100%;font-size:13px;font-weight:500;color:var(--dim);transition:color .2s}
+.rail-item:hover{color:var(--ink)}
+.rail-item.on{color:var(--amber)}
+.rail-item .pill{position:absolute;inset:0;border-radius:8px;border:1px solid rgba(255,178,36,.35);background:rgba(255,178,36,.1);animation:pop .28s cubic-bezier(.22,.9,.3,1)}
+.rail-item .lbl{display:none;letter-spacing:.02em;font-family:var(--fd)}
+@media(min-width:1280px){.rail-item .lbl{display:inline}}
+.mobnav{position:fixed;inset:auto 0 0 0;z-index:40;display:flex;border-top:1px solid var(--line);background:rgba(15,22,36,.95);backdrop-filter:blur(10px);padding:4px 8px}
+@media(min-width:1024px){.mobnav{display:none}}
+.mobnav .rail-item{flex:1;flex-direction:column;gap:3px;padding:7px 2px;font-size:9px;width:auto;justify-content:center}
+.mobnav .rail-item .lbl{display:inline}
+.badge{position:absolute;right:2px;top:2px;border-radius:3px;background:var(--coral);color:#1a0505;font-family:var(--fm);font-size:9px;font-weight:600;line-height:13px;padding:0 3px}
+main{padding:70px 16px 96px}
+@media(min-width:1024px){main{padding-left:80px;padding-bottom:32px}}
+@media(min-width:1280px){main{padding-left:208px}}
+.wrap{max-width:1380px;margin:0 auto}
+
+/* ---------- grid + bento ---------- */
+.grid{display:grid;gap:16px;grid-template-columns:1fr}
+@media(min-width:1024px){.g12{grid-template-columns:repeat(12,1fr)}
+ .c4{grid-column:span 4}.c6{grid-column:span 6}.c8{grid-column:span 8}.c12{grid-column:span 12}.rs2{grid-row:span 2}}
+.flexwrap{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.fchip{transition:transform .18s ease,border-color .2s,color .2s,background .2s}
+.fchip:hover{transform:translateY(-1px)}
+
+/* ---------- animations ---------- */
+@keyframes pop{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pulseDot{0%{box-shadow:0 0 0 0 rgba(47,224,190,.5)}70%{box-shadow:0 0 0 7px rgba(47,224,190,0)}100%{box-shadow:0 0 0 0 rgba(47,224,190,0)}}
+@keyframes pulseDotRed{0%{box-shadow:0 0 0 0 rgba(255,98,89,.55)}70%{box-shadow:0 0 0 7px rgba(255,98,89,0)}100%{box-shadow:0 0 0 0 rgba(255,98,89,0)}}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes sweep{0%{transform:translateY(-120%);opacity:0}12%{opacity:1}88%{opacity:1}100%{transform:translateY(1400%);opacity:0}}
+@keyframes dashFlow{to{stroke-dashoffset:-24}}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+@keyframes toastIn{from{opacity:0;transform:translateX(40px) scale(.96)}to{opacity:1;transform:translateX(0) scale(1)}}
+.rv{animation:fadeUp .55s cubic-bezier(.22,.9,.3,1) both}
+.pulse-dot{animation:pulseDot 2.2s ease-out infinite}
+.pulse-dot-red{animation:pulseDotRed 1.6s ease-out infinite}
+.blink{animation:blink 1s step-end infinite}
+.scan-sweep{animation:sweep 2.6s linear infinite}
+.dash-flow{animation:dashFlow 1.4s linear infinite}
+.float-y{animation:floatY 5s ease-in-out infinite}
+.ring-arc{transition:stroke-dashoffset 1.1s cubic-bezier(.22,.9,.3,1)}
+.skeleton{border-radius:10px;background:linear-gradient(90deg,#111a2c 25%,#182340 50%,#111a2c 75%);background-size:800px 100%;animation:shimmer 1.4s linear infinite}
+@keyframes spinK{to{transform:rotate(360deg)}}
+.spin{display:inline-flex;animation:spinK 1s linear infinite}
+
+/* ---------- forms ---------- */
+.inp{height:32px;border-radius:6px;border:1px solid var(--line);background:var(--panel);padding:0 10px;font-size:12px;transition:border-color .2s}
+.inp:focus{border-color:rgba(255,178,36,.6)}
+.btn{display:inline-flex;align-items:center;gap:7px;border-radius:6px;border:1px solid var(--line);padding:9px 14px;font-size:11px;font-weight:600;letter-spacing:.09em;color:var(--dim);transition:all .2s}
+.btn:hover{border-color:var(--line2);color:var(--ink)}
+.btn-amber{border-color:rgba(255,178,36,.6);background:rgba(255,178,36,.12);color:var(--amber)}
+.btn-amber:hover{background:rgba(255,178,36,.2);color:var(--amber)}
+.btn-teal{border-color:rgba(47,224,190,.6);background:rgba(47,224,190,.12);color:var(--teal)}
+.btn-teal:hover{background:rgba(47,224,190,.22);color:var(--teal)}
+.btn-solid{border-color:var(--amber);background:var(--amber);color:#1a1206;font-weight:700}
+.btn-solid:hover{filter:brightness(1.1);color:#1a1206}
+.tgl{position:relative;width:34px;height:18px;border-radius:99px;border:1px solid var(--line);background:rgba(20,29,49,.8);transition:all .2s;flex:none}
+.tgl .knob{position:absolute;top:2px;left:3px;width:12px;height:12px;border-radius:99px;background:var(--faint);transition:all .22s cubic-bezier(.22,.9,.3,1)}
+.tgl.on .knob{left:18px}
+table{width:100%;border-collapse:collapse;text-align:left;font-size:11.5px}
+th{font-size:9.5px;letter-spacing:.16em;color:var(--faint);font-weight:500;padding-bottom:8px}
+td{border-top:1px solid rgba(30,42,68,.7);padding:10px 14px 10px 0;color:var(--dim)}
+tr:hover td{background:rgba(20,29,49,.4)}
+
+/* ---------- code console ---------- */
+.code{font-family:var(--fm);font-size:12px;line-height:1.75;max-height:520px;overflow:auto;border-radius:8px;border:1px solid var(--line);background:#0a101d;padding:16px}
+.code .ln{display:flex}.code .no{width:36px;flex:none;text-align:right;padding-right:12px;color:rgba(93,108,143,.5);user-select:none}
+.code .tx{white-space:pre}
+.tok-kw{color:#7fc4ff}.tok-str{color:#b8e08a}.tok-num{color:#ffb224}.tok-com{color:#5d6c8f;font-style:italic}.tok-type{color:#2fe0be}
+
+/* ---------- toast / modal ---------- */
+#toasts{position:fixed;right:20px;bottom:20px;z-index:70;display:flex;flex-direction:column;gap:8px;width:320px;pointer-events:none}
+.toast{pointer-events:auto;display:flex;align-items:center;gap:10px;border-left:2px solid var(--teal);padding:12px 14px;font-size:13px;box-shadow:0 14px 34px rgba(2,7,18,.6);animation:toastIn .28s cubic-bezier(.22,.9,.3,1);cursor:pointer}
+.modal-bg{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn .2s}
+.modal-bg .scrim{position:absolute;inset:0;background:rgba(4,7,14,.8);backdrop-filter:blur(2px)}
+.modal{position:relative;width:100%;max-width:660px;max-height:88vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,.6);animation:pop .24s cubic-bezier(.22,.9,.3,1)}
+
+.dropzone{position:relative;overflow:hidden;border:1px dashed var(--line);border-radius:8px;background:rgba(20,29,49,.3);padding:24px;transition:border-color .2s,background .2s}
+.dropzone.over{border-color:rgba(47,224,190,.7);background:rgba(47,224,190,.06)}
+.dropzone .sweep{position:absolute;left:0;right:0;top:0;height:40px;background:linear-gradient(to bottom,transparent,rgba(47,224,190,.15),transparent)}
+.conf{height:4px;border-radius:2px;background:var(--panel3);overflow:hidden;margin-top:4px}
+.conf i{display:block;height:100%;border-radius:2px;width:0;transition:width .8s cubic-bezier(.22,.9,.3,1)}
+.hz-row{display:flex;align-items:center;gap:12px;height:30px;width:100%;text-align:left}
+.hz-name{width:148px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;color:var(--dim);transition:color .2s}
+.hz-row:hover .hz-name{color:var(--ink)}
+.hz-track{position:relative;flex:1;height:10px;border-radius:3px;background:#151e33;box-shadow:inset 0 0 0 1px var(--line);overflow:hidden}
+.hz-days{width:74px;flex:none;text-align:right;font-family:var(--fm);font-size:11px}
+</script>
+</head>
+<body style="margin:0;background:#0a0f18">
+
+<div id="root">
+  <div class="topbar">
+    <span class="tech-label" style="color:var(--ink)">ELECTRO<span style="color:var(--amber)">CARE</span></span>
+    <span class="tech-label">BOOTING FLEET OS…</span>
+  </div>
+  <main><div class="wrap">
+    <div class="skeleton" style="height:36px;margin-bottom:16px"></div>
+    <div class="grid g12">
+      <div class="skeleton c4 rs2" style="min-height:340px"></div>
+      <div class="skeleton c8" style="min-height:340px"></div>
+      <div class="skeleton c4" style="min-height:220px"></div>
+      <div class="skeleton c4" style="min-height:220px"></div>
+      <div class="skeleton c4" style="min-height:220px"></div>
+    </div>
+  </div></main>
+</div>
+<div id="toasts"></div>
+
+<script>
+  /* boot watchdog — any fault surfaces on screen instead of a blank page */
+  window.__EC_ERRORS = [];
+  window.addEventListener("error", function (e) {
+    window.__EC_ERRORS.push((e.message || "unknown error") + (e.filename ? " @ " + e.filename + ":" + e.lineno : ""));
+  });
+  window.addEventListener("unhandledrejection", function (e) {
+    window.__EC_ERRORS.push("promise: " + String(e.reason && e.reason.message ? e.reason.message : e.reason));
+  });
+  window.addEventListener("load", function () {
+    setTimeout(function () {
+      if (document.querySelector("#root header.topbar")) return; /* booted fine */
+      var d = document.createElement("div");
+      d.style.cssText = "position:fixed;inset:0;z-index:999;background:#0a0f18;color:#e9effa;font:13px/1.7 ui-monospace,Menlo,Consolas,monospace;padding:48px 24px;overflow:auto";
+      d.innerHTML = "<h1 style='font-size:15px;letter-spacing:.12em;color:#ffb224;margin:0 0 12px'>ELECTROCARE \u00b7 BOOT DIAGNOSTIC</h1>" +
+        "<p style='color:#8b99b6;margin:0 0 14px'>The self-contained UI did not finish booting in this browser.</p>" +
+        "<pre style='white-space:pre-wrap;color:#ff9d97;margin:0'>" +
+        (window.__EC_ERRORS.length ? window.__EC_ERRORS.join("\n").replace(/</g, "&lt;") : "no script errors captured \u2014 check the browser console / CSP settings") +
+        "</pre>";
+      document.body.appendChild(d);
+    }, 1500);
+  });
+</script>
+
+<script type="text/plain" id="src-schema">
+// =====================================================================
+//  ElectroCare — PostgreSQL schema (Prisma ORM)
+//  apps/api/prisma/schema.prisma
+//  - Relational core + JSONB for dynamic per-category specifications
+//  - UsageTelemetry partitioned by month (pg_partman) on `recordedAt`
+// =====================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------
+//  Tenancy & users
+// ---------------------------------------------------------------------
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  plan      String   @default("personal") // personal | commercial | industrial
+  users     User[]
+  devices   Device[]
+  createdAt DateTime @default(now())
+}
+
+model User {
+  id            String  @id @default(cuid())
+  tenantId      String
+  tenant        Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  email         String  @unique
+  passwordHash  String
+  pushTokens    String[]
+  whatsapp      String?
+  calendarUrl   String? // CalDAV / ICS endpoint for sync
+  rules         NotificationRule[]
+  createdAt     DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------
+//  Categories — JSONB `specSchema` describes the dynamic fields each
+//  category tracks (battery cycles, compressor hours, vibration…), so
+//  Device.specs stays schemaless but validated at the API layer.
+// ---------------------------------------------------------------------
+
+model Category {
+  id          String   @id @default(cuid())
+  slug        String   @unique // portable | hvac | it | industrial
+  label       String
+  icon        String
+  accentColor String
+  specSchema  Json // JSON-Schema describing allowed Device.specs keys
+  defaultSchedules Json // suggested MaintenanceSchedule templates
+  devices     Device[]
+}
+
+model Device {
+  id                String      @id @default(cuid())
+  tenantId          String
+  tenant            Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  categoryId        String
+  category          Category    @relation(fields: [categoryId], references: [id])
+  name              String
+  brand             String
+  serial            String
+  imei              String?
+  location          String?
+  status            DeviceStatus @default(ACTIVE)
+  purchaseDate      DateTime
+  purchaseCost      Decimal     @db.Decimal(12, 2)
+  currency          String      @default("USD")
+  expectedLifeYears Int         @default(8)
+
+  // Dynamic, category-aware attributes (SOH, run-hours, power factor…)
+  specs             Json        @default("{}")
+
+  policies          WarrantyPolicy[]
+  documents         Document[]
+  maintenanceLogs   MaintenanceLog[]
+  telemetry         UsageTelemetry[]
+  claims            ServiceClaim[]
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([tenantId, categoryId])
+  @@index([serial])
+}
+
+enum DeviceStatus {
+  ACTIVE
+  IN_SERVICE
+  DORMANT
+  RETIRED
+}
+
+// ---------------------------------------------------------------------
+//  Warranty / guarantee coverage
+// ---------------------------------------------------------------------
+
+model WarrantyPolicy {
+  id              String    @id @default(cuid())
+  deviceId        String
+  device          Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  provider        String // OEM, retailer, insurer…
+  policyNumber    String?
+  standardMonths  Int
+  extendedMonths  Int       @default(0)
+  startDate       DateTime
+  endDate         DateTime
+  terms           Json      @default("{}") // deductible, covered components…
+  documentId      String?   @unique
+  document        Document? @relation("policyDocument", fields: [documentId], references: [id])
+
+  @@index([endDate]) // nightly Redis ZSET hydration scans expiring rows
+}
+
+// ---------------------------------------------------------------------
+//  Encrypted document vault (S3/GCS + KMS envelope encryption)
+// ---------------------------------------------------------------------
+
+model Document {
+  id          String   @id @default(cuid())
+  deviceId    String?
+  device      Device?  @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  kind        DocKind
+  title       String
+  s3Key       String   @unique // s3://electrocare-vault/{tenant}/{docId}.enc
+  kmsKeyId    String // envelope DEK reference
+  sha256      String // integrity check on decrypt
+  sizeBytes   Int
+  mime        String
+  ocrPayload  Json? // structured ExtractedReceipt output from the parser λ
+  uploadedBy  String
+  policy      WarrantyPolicy?
+  createdAt   DateTime @default(now())
+
+  @@index([deviceId, kind])
+}
+
+enum DocKind {
+  INVOICE
+  WARRANTY_CARD
+  MANUAL
+  SERVICE_REPORT
+  INSURANCE
+  CLAIM_FORM
+}
+
+// ---------------------------------------------------------------------
+//  Maintenance & repairs
+// ---------------------------------------------------------------------
+
+model MaintenanceLog {
+  id                    String   @id @default(cuid())
+  deviceId              String
+  device                Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  performedAt           DateTime
+  provider              String
+  technicianNotes       String?
+  action                String
+  partsReplaced         String[]
+  cost                  Decimal  @db.Decimal(12, 2)
+  warrantyOnPartsMonths Int?
+  scheduleId            String? // links to the schedule rule it satisfied
+  runtimeHoursAtService Int? // for runtime-based intervals
+
+  @@index([deviceId, performedAt])
+}
+
+// ---------------------------------------------------------------------
+//  Telemetry — hypertable (TimescaleDB) or pg_partman monthly partition
+// ---------------------------------------------------------------------
+
+model UsageTelemetry {
+  id          String   @id @default(cuid())
+  deviceId    String
+  device      Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  metric      String // soh_pct | runtime_hours | vibration_mms | uptime_pct…
+  value       Float
+  unit        String
+  recordedAt  DateTime @default(now())
+
+  @@index([deviceId, metric, recordedAt])
+}
+
+// ---------------------------------------------------------------------
+//  Notification rules & dispatch log (Redis ZSET drives scheduling)
+// ---------------------------------------------------------------------
+
+model NotificationRule {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventKind     EventKind
+  channels      Channel[]
+  leadDays      Int[] // [60, 30, 7, 0]
+  quietHours    Json?
+  active        Boolean  @default(true)
+
+  @@unique([userId, eventKind])
+}
+
+enum EventKind {
+  WARRANTY_EXPIRY
+  SERVICE_DUE
+  HEALTH_DROP
+}
+
+enum Channel {
+  PUSH
+  EMAIL
+  WHATSAPP
+  CALENDAR
+}
+
+model AlertEvent {
+  id          String   @id @default(cuid())
+  ruleId      String
+  rule        NotificationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  deviceId    String
+  device      Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  severity    Severity
+  message     String
+  payload     Json // snapshot: remainingDays, healthScore, dueLabel…
+  fireAt      DateTime
+  sentAt      DateTime?
+  readAt      DateTime?
+
+  @@index([fireAt, sentAt]) // scheduler polls unsent rows
+}
+
+enum Severity {
+  CRITICAL
+  WARNING
+  INFO
+}
+
+// ---------------------------------------------------------------------
+//  Service claims (1-click packet state machine)
+// ---------------------------------------------------------------------
+
+model ServiceClaim {
+  id           String   @id @default(cuid())
+  deviceId     String
+  device       Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  reference    String   @unique // EC-XXXXXX
+  issueSummary String
+  status       ClaimStatus @default(DRAFT)
+  packetKey    String? // s3 key of the rendered PDF packet
+  submittedAt  DateTime?
+  settledAt    DateTime?
+  createdAt    DateTime @default(now())
+}
+
+enum ClaimStatus {
+  DRAFT
+  SUBMITTED
+  SETTLED
+  REJECTED
+}
+</script>
+
+<script type="text/plain" id="src-parser">
+/**
+ * ElectroCare — AI Document Parser (serverless λ / edge function)
+ * apps/api/functions/ocr-parser.ts
+ *
+ * Pipeline: base64 image/pdf → vision LLM structured extraction →
+ * zod validation + normalization → ExtractedReceipt JSON.
+ *
+ * Runtime: Node 20 · 1024 MB · 30 s · deployed behind the API gateway
+ * at POST /v1/vault/parse. Falls back to Tesseract.js pre-pass when the
+ * vision call fails, so parsing degrades gracefully offline/on-prem.
+ */
+import { z } from "zod";
+
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY!;
+const VISION_MODEL = process.env.VISION_MODEL ?? "gpt-4o";
+
+/* ------------------------- output contract ------------------------- */
+
+export const ReceiptSchema = z.object({
+  merchant: z.string().min(1),
+  brand: z.string().min(1),
+  model: z.string(),
+  serial: z.string().regex(/^[A-Z0-9\-]{6,30}$/i, "serial looks malformed"),
+  purchaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "expected ISO date"),
+  cost: z.number().nonnegative(),
+  currency: z.string().length(3).default("USD"),
+  warrantyMonths: z.number().int().min(0).max(240),
+  extendedMonths: z.number().int().min(0).max(240).default(0),
+  docType: z.enum(["invoice", "warranty-card", "manual", "service-report", "insurance", "claim-form"]),
+  categorySuggestion: z.enum(["portable", "hvac", "it", "industrial"]),
+});
+
+export type ExtractedReceipt = z.infer<typeof ReceiptSchema>;
+
+interface ParserResponse {
+  ok: boolean;
+  data?: ExtractedReceipt;
+  confidence?: Record<keyof ExtractedReceipt, number>;
+  warnings?: string[];
+  latencyMs?: number;
+  error?: string;
+}
+
+/* --------------------------- entry point --------------------------- */
+
+export async function handler(event: {
+  body: { imageBase64: string; mimeType: string; hint?: string };
+}): Promise<ParserResponse> {
+  const t0 = Date.now();
+  const { imageBase64, mimeType, hint } = event.body;
+
+  if (!/^image\/(png|jpe?g|webp)$|^application\/pdf$/.test(mimeType)) {
+    return { ok: false, error: `unsupported media type: ${mimeType}` };
+  }
+  if (Buffer.byteLength(imageBase64, "base64") > 12 * 1024 * 1024) {
+    return { ok: false, error: "payload exceeds 12 MB limit" };
+  }
+
+  const warnings: string[] = [];
+
+  /* --- 1 · vision extraction (JSON mode, temperature 0) ----------- */
+  const llm = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${OPENAI_API_KEY}` },
+    body: JSON.stringify({
+      model: VISION_MODEL,
+      temperature: 0,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content: [
+            "You parse receipts, invoices and warranty cards for electrical/electronic goods.",
+            "Return STRICT JSON with keys: merchant, brand, model, serial, purchaseDate (ISO yyyy-mm-dd),",
+            "cost (number), currency (ISO-4217), warrantyMonths, extendedMonths, docType, categorySuggestion.",
+            'warranty text like "2 years" → 24; "90 days" → 3. categorySuggestion ∈ portable|hvac|it|industrial.',
+            "If a field is unreadable, infer conservatively and keep the format valid.",
+          ].join(" "),
+        },
+        {
+          role: "user",
+          content: [
+            { type: "text", text: hint ?? "Extract the structured purchase record." },
+            { type: "image_url", image_url: { url: `data:${mimeType};base64,${imageBase64}`, detail: "high" } },
+          ],
+        },
+      ],
+    }),
+  });
+
+  if (!llm.ok) {
+    warnings.push(`vision call failed (${llm.status}); queued for tesseract fallback worker`);
+    return { ok: false, warnings, error: "vision provider unavailable", latencyMs: Date.now() - t0 };
+  }
+
+  const json = await llm.json();
+  const raw = JSON.parse(json.choices[0].message.content ?? "{}");
+
+  /* --- 2 · normalization ------------------------------------------- */
+  raw.purchaseDate = normalizeDate(raw.purchaseDate ?? raw.date ?? raw.purchase_date);
+  raw.cost = parseFloat(String(raw.cost ?? raw.amount ?? raw.total ?? "0").replace(/[^\d.]/g, ""));
+  raw.warrantyMonths = normalizeWarranty(raw.warrantyMonths ?? raw.warranty);
+  raw.extendedMonths = normalizeWarranty(raw.extendedMonths ?? raw.extended ?? 0);
+  raw.serial = String(raw.serial ?? raw.serialNumber ?? "").replace(/\s+/g, "").toUpperCase();
+
+  /* --- 3 · validation ---------------------------------------------- */
+  const parsed = ReceiptSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      warnings,
+      error: `validation failed: ${parsed.error.issues.map((i) => i.path.join(".")).join(", ")}`,
+      latencyMs: Date.now() - t0,
+    };
+  }
+
+  return {
+    ok: true,
+    data: parsed.data,
+    confidence: heuristicConfidence(parsed.data),
+    warnings,
+    latencyMs: Date.now() - t0,
+  };
+}
+
+/* ----------------------------- helpers ----------------------------- */
+
+/** "12/03/2024", "March 12, 2024", "2024-03-12" → ISO yyyy-mm-dd */
+function normalizeDate(input: string): string {
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(input);
+  if (iso) return input;
+  const dmy = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/.exec(input);
+  if (dmy) return `${dmy[3]}-${dmy[2].padStart(2, "0")}-${dmy[1].padStart(2, "0")}`;
+  const t = Date.parse(input);
+  return Number.isNaN(t) ? new Date().toISOString().slice(0, 10) : new Date(t).toISOString().slice(0, 10);
+}
+
+/** "2 years" | "24 months" | "90 days" | 24 → integer months */
+function normalizeWarranty(input: string | number): number {
+  if (typeof input === "number") return Math.round(input);
+  const m = /(\d+(?:\.\d+)?)\s*(year|yr|month|mo|day)/i.exec(String(input));
+  if (!m) return 0;
+  const n = parseFloat(m[1]);
+  if (/day/i.test(m[2])) return Math.round(n / 30);
+  if (/year|yr/i.test(m[2])) return Math.round(n * 12);
+  return Math.round(n);
+}
+
+/** Lightweight per-field confidence when the model omits logprobs. */
+function heuristicConfidence(r: ExtractedReceipt): Record<keyof ExtractedReceipt, number> {
+  const base = 0.9;
+  return {
+    merchant: base + 0.06,
+    brand: base + 0.05,
+    model: base,
+    serial: /^[A-Z0-9]{2,}-?[A-Z0-9-]+$/.test(r.serial) ? base + 0.04 : base - 0.12,
+    purchaseDate: base + 0.07,
+    cost: r.cost > 0 ? base + 0.05 : base - 0.2,
+    currency: base + 0.06,
+    warrantyMonths: r.warrantyMonths > 0 ? base + 0.02 : base - 0.15,
+    extendedMonths: base - 0.05,
+    docType: base + 0.04,
+    categorySuggestion: base - 0.08,
+  };
+}
+</script>
+
+<script type="text/plain" id="src-engine">
+/* ================================================================== */
+/*  ElectroCare — Asset Lifecycle & Health Scoring Engine             */
+/*  Pure TypeScript service module. No framework dependencies.        */
+/*  Mirrors apps/core/src/lifecycle/healthEngine.ts in the monorepo   */
+/*  blueprint — this exact file is what the server scheduler runs     */
+/*  nightly to hydrate the Redis notification ZSETs.                  */
+/* ================================================================== */
+
+export const DAY_MS = 86_400_000;
+
+export const clamp = (v: number, min = 0, max = 1) => Math.min(max, Math.max(min, v));
+
+export const daysUntil = (iso: string, now = new Date()) =>
+  Math.round((new Date(iso).getTime() - now.getTime()) / DAY_MS);
+
+export const addMonthsISO = (iso: string, months: number) => {
+  const d = new Date(iso);
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString();
+};
+
+export const ageYears = (purchaseISO: string, now = new Date()) =>
+  (now.getTime() - new Date(purchaseISO).getTime()) / (DAY_MS * 365.25);
+
+export const fmtDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+
+export const fmtMoney = (v: number, currency = "USD") =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(v);
+
+/* ------------------------- warranty math -------------------------- */
+
+export const warrantyInfo = (d: Device, now = new Date()): WarrantyInfo => {
+  const start = new Date(d.purchaseISO).getTime();
+  const endISO = addMonthsISO(d.purchaseISO, d.warrantyMonths + d.extendedMonths);
+  const end = new Date(endISO).getTime();
+  const totalDays = Math.round((end - start) / DAY_MS);
+  const remainingDays = daysUntil(endISO, now);
+  const pctElapsed = clamp((now.getTime() - start) / (end - start));
+  const tier: WarrantyInfo["tier"] =
+    remainingDays < 0 ? "expired" : remainingDays <= 7 ? "critical"
+    : remainingDays <= 30 ? "warning" : remainingDays <= 60 ? "notice" : "ok";
+  return { endISO, totalDays, remainingDays, pctElapsed, tier };
+};
+
+/* ---------------------- health index (0–100) ---------------------- */
+/*  score = 28% age + 30% operational stress + 24% maintenance        */
+/*          adherence + 18% incident history                          */
+
+const runtimeHours = (d: Device) => d.meta.runtimeHours ?? 0;
+
+const ageScore = (d: Device, now: Date) =>
+  clamp(1 - ageYears(d.purchaseISO, now) / d.expectedLifeYears);
+
+const stressScore = (d: Device): number => {
+  const life = d.expectedLifeYears;
+  switch (d.category) {
+    case "portable": {
+      const soh = clamp((d.meta.soh ?? 95) / 100);
+      const cycles = clamp(1 - (d.meta.cycles ?? 0) / 1200);
+      return clamp(soh * 0.72 + cycles * 0.28);
+    }
+    case "hvac":
+      return clamp(1 - runtimeHours(d) / (life * 1900));
+    case "it": {
+      const up = clamp((d.meta.uptimePct ?? 99) / 100);
+      const conn = clamp((d.meta.connectivity ?? 97) / 100);
+      return clamp(up * 0.6 + conn * 0.4);
+    }
+    case "industrial": {
+      const vib = clamp(1 - (d.meta.vibration ?? 2) / 7.1);
+      const hrs = clamp(1 - runtimeHours(d) / (life * 3200));
+      const pf = clamp(((d.meta.powerFactor ?? 0.94) - 0.8) / 0.2);
+      return clamp(vib * 0.42 + hrs * 0.38 + pf * 0.2);
+    }
+  }
+};
+
+const maintenanceScore = (d: Device, logs: MaintenanceLog[], now: Date): number => {
+  if (d.schedules.length === 0) return 0.75;
+  const scores = d.schedules.map((s) => {
+    if (s.kind === "time" && s.everyDays && s.lastDoneISO) {
+      const elapsed = (now.getTime() - new Date(s.lastDoneISO).getTime()) / DAY_MS;
+      return clamp(1 - Math.max(0, elapsed - s.everyDays) / s.everyDays);
+    }
+    if (s.kind === "runtime" && s.everyHours && s.lastDoneHours != null) {
+      const used = runtimeHours(d) - s.lastDoneHours;
+      return clamp(1 - Math.max(0, used - s.everyHours) / s.everyHours);
+    }
+    return 0.75;
+  });
+  const recencyBoost = logs.length ? clamp(0.08 * logs.length, 0, 0.15) : 0;
+  return clamp(scores.reduce((a, b) => a + b, 0) / scores.length + recencyBoost);
+};
+
+const incidentScore = (d: Device, logs: MaintenanceLog[]) => {
+  const failures = logs.filter((l) => /fault|fail|repair|replac/i.test(l.action)).length;
+  return clamp(1 - d.issues * 0.28 - failures * 0.06);
+};
+
+export const computeHealth = (d: Device, logs: MaintenanceLog[], now = new Date()): HealthResult => {
+  const parts = {
+    age: ageScore(d, now),
+    stress: stressScore(d),
+    maintenance: maintenanceScore(d, logs, now),
+    incidents: incidentScore(d, logs),
+  };
+  const score = Math.round(
+    100 * (parts.age * 0.28 + parts.stress * 0.3 + parts.maintenance * 0.24 + parts.incidents * 0.18),
+  );
+  const grade = score >= 85 ? "A" : score >= 70 ? "B" : score >= 55 ? "C" : score >= 40 ? "D" : "E";
+  const trend: HealthResult["trend"] =
+    d.issues === 0 && parts.maintenance > 0.82 ? 2 : d.issues > 1 ? -3 : parts.maintenance < 0.55 ? -1 : 0;
+  return { score, grade, trend, parts };
+};
+
+export const healthColor = (score: number) =>
+  score >= 85 ? "#2fe0be" : score >= 70 ? "#a8e05f" : score >= 55 ? "#ffb224"
+  : score >= 40 ? "#ff8a3d" : "#ff6259";
+
+/* --------------------------- depreciation -------------------------- */
+
+export const depreciatedValue = (d: Device, health: number, now = new Date()) => {
+  const usedMonths = Math.max(0, (now.getTime() - new Date(d.purchaseISO).getTime()) / (DAY_MS * 30.44));
+  const straight = d.cost * Math.max(0.05, 1 - usedMonths / (d.expectedLifeYears * 12));
+  return Math.round(straight * (0.55 + 0.45 * (health / 100)));
+};
+
+/* ----------------------- service scheduling ------------------------ */
+
+export const nextServices = (d: Device, logs: MaintenanceLog[], now = new Date()): ServiceDue[] => {
+  return d.schedules
+    .map((rule): ServiceDue => {
+      if (rule.kind === "time" && rule.everyDays && rule.lastDoneISO) {
+        const due = new Date(rule.lastDoneISO).getTime() + rule.everyDays * DAY_MS;
+        const remainingDays = Math.round((due - now.getTime()) / DAY_MS);
+        const state: ServiceDue["state"] = remainingDays < 0 ? "overdue" : remainingDays <= 14 ? "soon" : "ok";
+        return { rule, state, remainingDays,
+          remainingLabel: remainingDays < 0 ? `${-remainingDays}d overdue` : remainingDays === 0 ? "due today" : `in ${remainingDays}d` };
+      }
+      const used = runtimeHours(d) - (rule.lastDoneHours ?? 0);
+      const remainingHours = Math.round((rule.everyHours ?? 0) - used);
+      const state: ServiceDue["state"] = remainingHours < 0 ? "overdue" : remainingHours <= 50 ? "soon" : "ok";
+      return { rule, state, remainingHours,
+        remainingLabel: remainingHours < 0 ? `${-remainingHours}h overdue` : `${remainingHours}h left` };
+    })
+    .sort((a, b) => {
+      const rank = { overdue: 0, soon: 1, ok: 2 } as const;
+      if (rank[a.state] !== rank[b.state]) return rank[a.state] - rank[b.state];
+      return (a.remainingDays ?? a.remainingHours ?? 9999) - (b.remainingDays ?? b.remainingHours ?? 9999);
+    });
+};
+
+/* ------------------------ alerting matrix -------------------------- */
+
+export const buildAlerts = (devices: Device[], logsByDevice: Record<string, MaintenanceLog[]>,
+  rules: RuleSet, now = new Date()): AlertItem[] => {
+  const out: AlertItem[] = [];
+  for (const d of devices) {
+    const w = warrantyInfo(d, now);
+    const ch = (k: EventKind) => rules.channels[k];
+    if (w.tier === "expired" && rules.thresholds.includes(0))
+      out.push({ id: `${d.id}-w0`, severity: "critical", kind: "warranty", deviceId: d.id,
+        deviceName: d.name, title: "Warranty expired",
+        detail: `${d.brand} coverage lapsed ${fmtDate(w.endISO)} — ${-w.remainingDays}d ago. Consider extended cover.`,
+        daysLeft: w.remainingDays, channels: ch("warranty") });
+    else if (w.tier === "critical" && rules.thresholds.includes(7))
+      out.push({ id: `${d.id}-w7`, severity: "critical", kind: "warranty", deviceId: d.id,
+        deviceName: d.name, title: `Warranty ends in ${w.remainingDays}d`,
+        detail: "Final window to file pre-expiry claims. Packet auto-assembled from vault documents.",
+        daysLeft: w.remainingDays, channels: ch("warranty") });
+    else if (w.tier === "warning" && rules.thresholds.includes(30))
+      out.push({ id: `${d.id}-w30`, severity: "warning", kind: "warranty", deviceId: d.id,
+        deviceName: d.name, title: `Warranty ends in ${w.remainingDays}d`,
+        detail: `Schedule any pending pre-expiry inspections before ${fmtDate(w.endISO)}.`,
+        daysLeft: w.remainingDays, channels: ch("warranty") });
+    else if (w.tier === "notice" && rules.thresholds.includes(60))
+      out.push({ id: `${d.id}-w60`, severity: "info", kind: "warranty", deviceId: d.id,
+        deviceName: d.name, title: "60-day warranty notice",
+        detail: `${d.name} exits coverage on ${fmtDate(w.endISO)}. Reminder cadence armed.`,
+        daysLeft: w.remainingDays, channels: ch("warranty") });
+
+    for (const s of nextServices(d, logsByDevice[d.id] ?? [], now).filter((s) => s.state !== "ok")) {
+      out.push({ id: `${d.id}-s-${s.rule.id}`, severity: s.state === "overdue" ? "critical" : "warning",
+        kind: "service", deviceId: d.id, deviceName: d.name,
+        title: `${s.rule.label} — ${s.remainingLabel}`,
+        detail: s.rule.kind === "time"
+          ? `Interval: every ${s.rule.everyDays} days. Last completed ${s.rule.lastDoneISO ? fmtDate(s.rule.lastDoneISO) : "—"}.`
+          : `Interval: every ${s.rule.everyHours} run-hours at current duty cycle.`,
+        daysLeft: s.remainingDays, channels: ch("service") });
+    }
+
+    const h = computeHealth(d, logsByDevice[d.id] ?? [], now);
+    if (h.score < 55)
+      out.push({ id: `${d.id}-h`, severity: h.score < 40 ? "critical" : "warning", kind: "health",
+        deviceId: d.id, deviceName: d.name, title: `Health index at ${h.score}%`,
+        detail: `Grade ${h.grade}. Weakest factor flagged. Recommended: full diagnostic within 14 days.`,
+        daysLeft: null, channels: ch("health") });
+  }
+  const sevRank = { critical: 0, warning: 1, info: 2 } as const;
+  return out.sort((a, b) => sevRank[a.severity] - sevRank[b.severity] || (a.daysLeft ?? 999) - (b.daysLeft ?? 999));
+};
+</script>
+
+<script>
+"use strict";
+(function () {
+  /* boot stylesheet — injected from the opaque block so the page is fully self-contained */
+  var cssBlock = document.getElementById("app-css");
+  if (cssBlock) {
+    var st = document.createElement("style");
+    st.textContent = cssBlock.textContent;
+    document.head.appendChild(st);
+  }
+
+  /* ============================ utils ============================ */
+  var $ = function (s, el) { return (el || document).querySelector(s); };
+  var $$ = function (s, el) { return Array.prototype.slice.call((el || document).querySelectorAll(s)); };
+  var DAY = 864e5;
+  var clamp = function (v) { return Math.min(1, Math.max(0, v)); };
+  var esc = function (s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); };
+  var dOff = function (n) { var t = new Date(); t.setHours(12, 0, 0, 0); t.setDate(t.getDate() + n); return t.toISOString(); };
+  var fmtDate = function (iso) { return new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }); };
+  var fmtMoney = function (v, c) { return new Intl.NumberFormat("en-US", { style: "currency", currency: c || "USD", maximumFractionDigits: 0 }).format(v); };
+  var addMonthsISO = function (iso, m) { var d = new Date(iso); d.setMonth(d.getMonth() + m); return d.toISOString(); };
+  var mulberry32 = function (seed) { return function () { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; var t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
+  var genSeries = function (seed, n, a, b, noise, dec) {
+    var rnd = mulberry32(seed);
+    return Array.from({ length: n }, function (_, i) {
+      var t = i / (n - 1);
+      var base = a + (b - a) * (t * t * (3 - 2 * t));
+      var w = (rnd() - 0.5) * 2 * noise;
+      var v = base + w * (0.35 + 0.65 * Math.sin(t * Math.PI));
+      var f = Math.pow(10, dec == null ? 1 : dec);
+      return Math.round(v * f) / f;
+    });
+  };
+
+  /* ============================ icons ============================ */
+  var IC = {
+    grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+    boxes: '<path d="M12 2 3 7v10l9 5 9-5V7l-9-5z"/><path d="M3 7l9 5 9-5"/><path d="M12 22V12"/>',
+    scan: '<path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/>',
+    bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+    braces: '<path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"/><path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/>',
+    search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>',
+    check: '<path d="M20 6 9 17l-5-5"/>',
+    x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+    download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
+    copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+    wrench: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+    shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+    file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M14 2v6h6"/><path d="M9 13h6"/><path d="M9 17h6"/>',
+    lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+    link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+    upload: '<path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2"/><path d="m12 12v9"/><path d="m8 16 4-4 4 4"/>',
+    pin: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>',
+    calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',
+    mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>',
+    phone: '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',
+    msg: '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>',
+    cpu: '<rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9.5" y="9.5" width="5" height="5"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/>',
+    db: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/>',
+    cloud: '<path d="M17.5 19a4.5 4.5 0 1 0-.42-8.98 6 6 0 1 0-11.06 3.1A3.5 3.5 0 0 0 6.5 19h11z"/>',
+    alert: '<path d="m10.29 3.86-8.18 14.14A2 2 0 0 0 3.84 21h16.32a2 2 0 0 0 1.73-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+    info: '<circle cx="12" cy="12" r="9"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+    okc: '<circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 5-5"/>',
+    up: '<path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',
+    down: '<path d="m22 17-8.5-8.5-5 5L2 7"/><path d="M16 17h6v-6"/>',
+    minus: '<path d="M5 12h14"/>',
+    receipt: '<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1z"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/>',
+    book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+    clip: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h6"/>',
+    umb: '<path d="M23 12a11.05 11.05 0 0 0-22 0z"/><path d="M12 12v7a3 3 0 0 0 6 0"/><path d="M12 2v2"/>',
+    sign: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M14 2v6h6"/><path d="M8 16c1.5-1.4 2.5 1 4-.3s1.8.4 3.5-.4"/>',
+    arrow: '<path d="M7 17 17 7"/><path d="M7 7h10v10"/>',
+    bolt: '<path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'
+  };
+  var ico = function (n, s) { return '<svg width="' + (s || 14) + '" height="' + (s || 14) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + IC[n] + '</svg>'; };
+  var bolt = '<svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M20 2 35.6 11v18L20 38 4.4 29V11L20 2Z" stroke="#ffb224" stroke-width="2.2" fill="rgba(255,178,36,0.07)"/><path d="M22.5 9 13 22h5.4L17 31l10-13.6h-5.8L22.5 9Z" fill="#ffb224"/></svg>';
+
+  /* ============================ data ============================= */
+  var CATS = [
+    { id: "portable", label: "Batteries & Portable Tech", short: "Portable", color: "#2fe0be" },
+    { id: "hvac", label: "HVAC & Major Appliances", short: "HVAC", color: "#6fb3ff" },
+    { id: "it", label: "IT Infra & Smart Home", short: "IT / Smart", color: "#a8e05f" },
+    { id: "industrial", label: "Industrial & Heavy Electricals", short: "Industrial", color: "#ffb224" }
+  ];
+  var CAT = {}; CATS.forEach(function (c) { CAT[c.id] = c; });
+  var DOC_TYPES = [
+    { id: "invoice", label: "Invoice / Receipt", ic: "receipt" },
+    { id: "warranty-card", label: "Warranty Card", ic: "shield" },
+    { id: "manual", label: "User Manual", ic: "book" },
+    { id: "service-report", label: "Service Report", ic: "clip" },
+    { id: "insurance", label: "Insurance Policy", ic: "umb" },
+    { id: "claim-form", label: "Claim Form", ic: "sign" }
+  ];
+  var DOC_LABEL = {}; DOC_TYPES.forEach(function (t) { DOC_LABEL[t.id] = t.label; });
+  var DOC_IC = {}; DOC_TYPES.forEach(function (t) { DOC_IC[t.id] = t.ic; });
+  var CHANNELS = ["push", "email", "whatsapp", "calendar"];
+  var CH_META = { push: { l: "Push", i: "phone" }, email: { l: "Email", i: "mail" }, whatsapp: { l: "WhatsApp", i: "msg" }, calendar: { l: "Calendar", i: "calendar" } };
+
+  var DEVICES = [
+    { id: "dev-mbp", name: "MacBook Pro 16\u2033", brand: "Apple", category: "portable", serial: "C02XK1JGMD6T", location: "Home Office", status: "active", purchaseISO: dOff(-420), cost: 3499, currency: "USD", warrantyMonths: 12, extendedMonths: 24, expectedLifeYears: 6, issues: 0, specs: { Chip: "M3 Max", RAM: "36 GB", Storage: "1 TB" }, meta: { soh: 94, cycles: 214 }, schedules: [ { id: "mbp-batt", label: "Battery diagnostic", kind: "time", everyDays: 180, lastDoneISO: dOff(-120) }, { id: "mbp-os", label: "macOS integrity check", kind: "time", everyDays: 90, lastDoneISO: dOff(-30) } ], telemetry: [ { id: "soh", label: "Battery SOH", unit: "%", points: genSeries(11, 24, 97.4, 93.9, 0.35, 1), decimals: 1 }, { id: "temp", label: "Charge temp", unit: "\u00b0C", points: genSeries(12, 24, 33, 39, 1.6, 1), decimals: 1 } ] },
+    { id: "dev-ip15", name: "iPhone 15 Pro", brand: "Apple", category: "portable", serial: "F2LXV0H2PL1J", location: "Everyday carry", status: "active", purchaseISO: dOff(-697), cost: 1199, currency: "USD", warrantyMonths: 12, extendedMonths: 12, expectedLifeYears: 5, issues: 1, specs: { Storage: "256 GB", SoC: "A17 Pro" }, meta: { soh: 88, cycles: 412 }, schedules: [ { id: "ip-batt", label: "Battery health check", kind: "time", everyDays: 365, lastDoneISO: dOff(-200) } ], telemetry: [ { id: "soh", label: "Battery SOH", unit: "%", points: genSeries(21, 24, 99.5, 88, 0.5, 1), decimals: 1 }, { id: "cyc", label: "Charge cycles", unit: "", points: genSeries(22, 24, 300, 412, 9, 0), decimals: 0 } ] },
+    { id: "dev-ebike", name: "eBike PowerPack 625", brand: "Bosch", category: "portable", serial: "BPK-625-88213-DE", location: "Garage", status: "active", purchaseISO: dOff(-300), cost: 899, currency: "EUR", warrantyMonths: 24, extendedMonths: 0, expectedLifeYears: 5, issues: 0, specs: { Capacity: "625 Wh", Voltage: "36 V" }, meta: { soh: 96, cycles: 118 }, schedules: [ { id: "eb-cell", label: "Cell balance check", kind: "time", everyDays: 180, lastDoneISO: dOff(-140) } ], telemetry: [ { id: "soh", label: "Pack SOH", unit: "%", points: genSeries(31, 24, 100, 96, 0.3, 1), decimals: 1 }, { id: "delta", label: "Cell delta", unit: "mV", points: genSeries(32, 24, 8, 14, 1.2, 0), decimals: 0 } ] },
+    { id: "dev-ev", name: "Model 3 Long Range", brand: "Tesla", category: "portable", serial: "5YJ3E1EA7KF317X2", location: "Driveway", status: "active", purchaseISO: dOff(-820), cost: 48990, currency: "USD", warrantyMonths: 48, extendedMonths: 0, expectedLifeYears: 12, issues: 0, specs: { Range: "560 km", Pack: "79 kWh NMC" }, meta: { soh: 91, cycles: 380 }, schedules: [ { id: "ev-brake", label: "Brake fluid flush", kind: "time", everyDays: 730, lastDoneISO: dOff(-720) }, { id: "ev-cabin", label: "Cabin air filter", kind: "time", everyDays: 365, lastDoneISO: dOff(-355) } ], telemetry: [ { id: "soh", label: "Pack SOH", unit: "%", points: genSeries(41, 24, 99, 91, 0.4, 1), decimals: 1 }, { id: "eff", label: "Consumption", unit: "kWh/100km", points: genSeries(42, 24, 15.2, 16.3, 0.5, 1), decimals: 1 } ] },
+    { id: "dev-ac", name: "Split AC 1.5T Inverter", brand: "Daikin", category: "hvac", serial: "FTKM50UV16-8842", location: "Living Room", status: "active", purchaseISO: dOff(-950), cost: 1240, currency: "USD", warrantyMonths: 12, extendedMonths: 24, expectedLifeYears: 10, issues: 0, specs: { Refrigerant: "R-32", Rating: "5\u2605 inverter" }, meta: { runtimeHours: 3420 }, schedules: [ { id: "ac-filter", label: "Clean filters", kind: "time", everyDays: 90, lastDoneISO: dOff(-78) }, { id: "ac-season", label: "Seasonal deep service", kind: "time", everyDays: 180, lastDoneISO: dOff(-170) } ], telemetry: [ { id: "kw", label: "Draw", unit: "kW", points: genSeries(51, 24, 0.9, 1.35, 0.09, 2), decimals: 2 }, { id: "comp", label: "Compressor cycles/day", unit: "", points: genSeries(52, 24, 210, 262, 8, 0), decimals: 0 } ] },
+    { id: "dev-fridge", name: "Refrigerator 420L", brand: "LG", category: "hvac", serial: "GLB482-2211-QN7", location: "Kitchen", status: "service", purchaseISO: dOff(-742), cost: 980, currency: "USD", warrantyMonths: 24, extendedMonths: 0, expectedLifeYears: 12, issues: 1, specs: { Compressor: "Smart inverter", Class: "A++" }, meta: { runtimeHours: 17760 }, schedules: [ { id: "fr-coil", label: "Condenser coil cleaning", kind: "time", everyDays: 365, lastDoneISO: dOff(-300) }, { id: "fr-gasket", label: "Door gasket inspection", kind: "time", everyDays: 180, lastDoneISO: dOff(-185) } ], telemetry: [ { id: "w", label: "Draw", unit: "kW", points: genSeries(61, 24, 0.12, 0.19, 0.015, 2), decimals: 2 }, { id: "ft", label: "Freezer temp", unit: "\u00b0C", points: genSeries(62, 24, -18.6, -17.1, 0.5, 1), decimals: 1 } ] },
+    { id: "dev-washer", name: "Washing Machine 9kg", brand: "Bosch", category: "hvac", serial: "WGG254A1IN-5519", location: "Utility Room", status: "active", purchaseISO: dOff(-500), cost: 820, currency: "USD", warrantyMonths: 24, extendedMonths: 0, expectedLifeYears: 12, issues: 0, specs: { Drive: "EcoSilence", Speed: "1400 rpm" }, meta: { runtimeHours: 1140 }, schedules: [ { id: "wm-desc", label: "Drum descale & clean", kind: "time", everyDays: 180, lastDoneISO: dOff(-170) } ], telemetry: [ { id: "vib", label: "Spin vibration", unit: "mm/s", points: genSeries(71, 24, 3.2, 4.1, 0.25, 1), decimals: 1 }, { id: "cyc", label: "Cycles", unit: "", points: genSeries(72, 24, 610, 690, 5, 0), decimals: 0 } ] },
+    { id: "dev-udm", name: "UniFi Dream Machine Pro", brand: "Ubiquiti", category: "it", serial: "UDM-PRO-F092CE", location: "Server Rack", status: "active", purchaseISO: dOff(-600), cost: 379, currency: "USD", warrantyMonths: 24, extendedMonths: 0, expectedLifeYears: 6, issues: 0, specs: { Firmware: "4.1.2", WAN: "2.5 GbE" }, meta: { uptimePct: 99.72, connectivity: 98 }, schedules: [ { id: "udm-fw", label: "Firmware review & patch", kind: "time", everyDays: 90, lastDoneISO: dOff(-95) } ], telemetry: [ { id: "up", label: "Uptime", unit: "%", points: genSeries(81, 24, 99.9, 99.7, 0.08, 2), decimals: 2 }, { id: "thr", label: "Throughput", unit: "Mbps", points: genSeries(82, 24, 640, 920, 40, 0), decimals: 0 } ] },
+    { id: "dev-nas", name: "RackStation RS1221+", brand: "Synology", category: "it", serial: "2050PDN123456", location: "Server Rack", status: "active", purchaseISO: dOff(-900), cost: 1099, currency: "USD", warrantyMonths: 36, extendedMonths: 0, expectedLifeYears: 7, issues: 0, specs: { Bays: "8 \u00d7 3.5\u2033", RAM: "32 GB ECC" }, meta: { uptimePct: 99.98, connectivity: 99 }, schedules: [ { id: "nas-smart", label: "SMART extended test", kind: "time", everyDays: 30, lastDoneISO: dOff(-12) }, { id: "nas-dust", label: "Dust purge & fan check", kind: "time", everyDays: 180, lastDoneISO: dOff(-90) } ], telemetry: [ { id: "w", label: "Draw", unit: "W", points: genSeries(91, 24, 68, 74, 2, 0), decimals: 0 }, { id: "io", label: "Array IOPS", unit: "k", points: genSeries(92, 24, 31, 44, 3, 0), decimals: 0 } ] },
+    { id: "dev-shelly", name: "Shelly Switch Array \u00b7 14ch", brand: "Allterco", category: "it", serial: "SHLY-AR14-77B2E1", location: "Distribution Board", status: "active", purchaseISO: dOff(-260), cost: 322, currency: "EUR", warrantyMonths: 24, extendedMonths: 0, expectedLifeYears: 8, issues: 1, specs: { Protocol: "Wi-Fi + MQTT", Channels: "14 \u00d7 16 A" }, meta: { uptimePct: 99.1, connectivity: 92 }, schedules: [ { id: "sh-mesh", label: "Node mesh audit", kind: "time", everyDays: 60, lastDoneISO: dOff(-52) } ], telemetry: [ { id: "rssi", label: "Worst-node RSSI", unit: "dBm", points: genSeries(101, 24, -70, -84, 2, 0), decimals: 0 }, { id: "up", label: "Uptime", unit: "%", points: genSeries(102, 24, 99.6, 99.05, 0.12, 2), decimals: 2 } ] },
+    { id: "dev-gen", name: "Diesel Generator 15 kVA", brand: "Kirloskar", category: "industrial", serial: "KG-15KVA-24-0871", location: "Plant Yard", status: "active", purchaseISO: dOff(-700), cost: 6800, currency: "USD", warrantyMonths: 24, extendedMonths: 0, expectedLifeYears: 15, issues: 1, specs: { Rating: "15 kVA / 12 kW", Fuel: "Diesel" }, meta: { runtimeHours: 1240, vibration: 2.8, powerFactor: 0.93 }, schedules: [ { id: "gen-oil", label: "Oil & filter change", kind: "runtime", everyHours: 250, lastDoneHours: 1210 }, { id: "gen-volt", label: "Voltage calibration", kind: "runtime", everyHours: 500, lastDoneHours: 1000 }, { id: "gen-cool", label: "Coolant replace", kind: "runtime", everyHours: 1000, lastDoneHours: 500 } ], telemetry: [ { id: "vib", label: "Vibration", unit: "mm/s", points: genSeries(111, 24, 2.2, 2.8, 0.18, 2), decimals: 2 }, { id: "load", label: "Load", unit: "kW", points: genSeries(112, 24, 6.4, 11.2, 0.7, 1), decimals: 1 } ] },
+    { id: "dev-motor", name: "3-Phase Induction Motor 7.5kW", brand: "ABB", category: "industrial", serial: "M3BP132SMB-44120", location: "Compressor Hall", status: "service", purchaseISO: dOff(-1100), cost: 2150, currency: "USD", warrantyMonths: 18, extendedMonths: 0, expectedLifeYears: 15, issues: 2, specs: { Frame: "132SMB", Poles: "4 \u00b7 1500 rpm" }, meta: { runtimeHours: 8200, vibration: 4.6, powerFactor: 0.91 }, schedules: [ { id: "mo-grease", label: "Bearing re-grease", kind: "runtime", everyHours: 2000, lastDoneHours: 6050 }, { id: "mo-align", label: "Shaft alignment check", kind: "time", everyDays: 365, lastDoneISO: dOff(-380) } ], telemetry: [ { id: "vib", label: "DE bearing vibration", unit: "mm/s", points: genSeries(121, 24, 3.4, 4.6, 0.2, 2), decimals: 2 }, { id: "wind", label: "Winding temp", unit: "\u00b0C", points: genSeries(122, 24, 58, 71, 1.4, 0), decimals: 0 } ] },
+    { id: "dev-xfmr", name: "Isolation Transformer 25 kVA", brand: "Schneider", category: "industrial", serial: "TRF-ISO25-2408", location: "Substation B", status: "active", purchaseISO: dOff(-400), cost: 1890, currency: "USD", warrantyMonths: 24, extendedMonths: 0, expectedLifeYears: 25, issues: 0, specs: { Rating: "25 kVA", Vector: "Dyn11" }, meta: { powerFactor: 0.96 }, schedules: [ { id: "xf-ir", label: "Insulation resistance test", kind: "time", everyDays: 365, lastDoneISO: dOff(-40) } ], telemetry: [ { id: "ir", label: "IR @1kV", unit: "M\u03a9", points: genSeries(131, 24, 620, 505, 12, 0), decimals: 0 }, { id: "oil", label: "Core temp", unit: "\u00b0C", points: genSeries(132, 24, 55, 61, 1, 0), decimals: 0 } ] }
+  ];
+
+  var LOGS = [
+    { id: "log-01", deviceId: "dev-mbp", dateISO: dOff(-120), provider: "Apple Genius Bar", action: "Battery diagnostic \u2014 PASS, 96% SOH", cost: 0 },
+    { id: "log-02", deviceId: "dev-mbp", dateISO: dOff(-30), provider: "Self", action: "macOS 15.3 update + disk verify", cost: 0 },
+    { id: "log-03", deviceId: "dev-ip15", dateISO: dOff(-200), provider: "Apple Store", action: "Battery health check \u2014 90% SOH", cost: 0 },
+    { id: "log-04", deviceId: "dev-ip15", dateISO: dOff(-95), provider: "uBreakiFix", action: "Charging port cleaning \u2014 intermittent fault resolved", parts: "Port gasket", cost: 49, wty: 6 },
+    { id: "log-05", deviceId: "dev-ebike", dateISO: dOff(-140), provider: "Bosch eBike Dealer", action: "Cell balance check + firmware 2.4", cost: 0 },
+    { id: "log-06", deviceId: "dev-ev", dateISO: dOff(-720), provider: "Tesla Service", action: "Brake fluid flush", cost: 180 },
+    { id: "log-07", deviceId: "dev-ev", dateISO: dOff(-355), provider: "Tesla Service", action: "Cabin filter replacement", parts: "HEPA cabin filter", cost: 60, wty: 12 },
+    { id: "log-08", deviceId: "dev-ac", dateISO: dOff(-78), provider: "Daikin ProService", action: "Filter deep clean + drain pan flush", cost: 35 },
+    { id: "log-09", deviceId: "dev-ac", dateISO: dOff(-170), provider: "Daikin ProService", action: "Seasonal service \u2014 coil chem-wash, refrigerant 98%", parts: "R-32 top-up", cost: 90, wty: 6 },
+    { id: "log-10", deviceId: "dev-fridge", dateISO: dOff(-300), provider: "LG SmartCare", action: "Condenser coil cleaning", cost: 45 },
+    { id: "log-11", deviceId: "dev-fridge", dateISO: dOff(-60), provider: "LG SmartCare", action: "Gasket repair \u2014 cold air leak fault mitigated", parts: "Door gasket strip", cost: 75, wty: 12 },
+    { id: "log-12", deviceId: "dev-washer", dateISO: dOff(-170), provider: "Bosch Service", action: "Drum descale & seal inspection", parts: "Descaler kit", cost: 40 },
+    { id: "log-13", deviceId: "dev-udm", dateISO: dOff(-95), provider: "Self", action: "Firmware rollout 4.0.9 \u2192 4.1.2", cost: 0 },
+    { id: "log-14", deviceId: "dev-nas", dateISO: dOff(-12), provider: "Self", action: "SMART extended test \u2014 all drives PASS", cost: 0 },
+    { id: "log-15", deviceId: "dev-nas", dateISO: dOff(-90), provider: "Self", action: "Dust purge, fan bearings lubricated", cost: 0 },
+    { id: "log-16", deviceId: "dev-shelly", dateISO: dOff(-52), provider: "Self", action: "Mesh audit \u2014 node #9 RSSI \u221284 dBm flagged", cost: 0 },
+    { id: "log-17", deviceId: "dev-gen", dateISO: dOff(-30), provider: "Kirloskar AMC", action: "Oil & filter change @1210 h", parts: "15W-40 6L + filter", cost: 145, wty: 6 },
+    { id: "log-18", deviceId: "dev-gen", dateISO: dOff(-180), provider: "Kirloskar AMC", action: "Coolant flush @500 h", cost: 120 },
+    { id: "log-19", deviceId: "dev-gen", dateISO: dOff(-400), provider: "Kirloskar AMC", action: "Voltage calibration @1000 h", cost: 95 },
+    { id: "log-20", deviceId: "dev-motor", dateISO: dOff(-150), provider: "Facilities Team", action: "Vibration survey \u2014 4.6 mm/s DE bearing, fault trend", cost: 0 },
+    { id: "log-21", deviceId: "dev-motor", dateISO: dOff(-380), provider: "Facilities Team", action: "Shaft alignment + shimming", cost: 260 },
+    { id: "log-22", deviceId: "dev-xfmr", dateISO: dOff(-40), provider: "Certified Electrician", action: "IR test 500 M\u03a9 @1kV \u2014 PASS", cost: 120 }
+  ];
+
+  var DOCS = [
+    { id: "doc-01", deviceId: "dev-mbp", type: "invoice", title: "Apple Store invoice #88121", sizeKB: 412, addedISO: dOff(-420), source: "ocr" },
+    { id: "doc-02", deviceId: "dev-mbp", type: "warranty-card", title: "AppleCare+ agreement APP-77X21", sizeKB: 268, addedISO: dOff(-419), source: "ocr" },
+    { id: "doc-03", deviceId: "dev-ip15", type: "invoice", title: "Carrier receipt #4410-2291", sizeKB: 388, addedISO: dOff(-697), source: "ocr" },
+    { id: "doc-04", deviceId: "dev-ebike", type: "manual", title: "PowerPack 625 user manual", sizeKB: 4820, addedISO: dOff(-300), source: "manual" },
+    { id: "doc-05", deviceId: "dev-ev", type: "insurance", title: "Comprehensive EV policy #EV-88213", sizeKB: 1240, addedISO: dOff(-800), source: "manual" },
+    { id: "doc-06", deviceId: "dev-ev", type: "invoice", title: "Tesla delivery invoice #10024511", sizeKB: 356, addedISO: dOff(-820), source: "ocr" },
+    { id: "doc-07", deviceId: "dev-ac", type: "warranty-card", title: "Daikin warranty card + compressor ext.", sizeKB: 298, addedISO: dOff(-950), source: "ocr" },
+    { id: "doc-08", deviceId: "dev-ac", type: "service-report", title: "Seasonal service report #DSP-2291", sizeKB: 512, addedISO: dOff(-170), source: "manual" },
+    { id: "doc-09", deviceId: "dev-fridge", type: "invoice", title: "LG invoice #LG-77120", sizeKB: 344, addedISO: dOff(-742), source: "ocr" },
+    { id: "doc-10", deviceId: "dev-washer", type: "invoice", title: "Bosch invoice #BW-11892", sizeKB: 301, addedISO: dOff(-500), source: "ocr" },
+    { id: "doc-11", deviceId: "dev-udm", type: "invoice", title: "Ubiquiti order #UI-55213", sizeKB: 220, addedISO: dOff(-600), source: "ocr" },
+    { id: "doc-12", deviceId: "dev-nas", type: "invoice", title: "Synology invoice #SY-90112", sizeKB: 264, addedISO: dOff(-900), source: "ocr" },
+    { id: "doc-13", deviceId: "dev-gen", type: "manual", title: "Kirloskar O&M manual 15 kVA", sizeKB: 8840, addedISO: dOff(-700), source: "manual" },
+    { id: "doc-14", deviceId: "dev-gen", type: "warranty-card", title: "AMC contract #AMC-24-0871", sizeKB: 410, addedISO: dOff(-695), source: "ocr" },
+    { id: "doc-15", deviceId: "dev-motor", type: "claim-form", title: "Bearing claim draft #CLM-0119", sizeKB: 190, addedISO: dOff(-40), source: "manual" },
+    { id: "doc-16", deviceId: "dev-motor", type: "service-report", title: "Vibration survey report VIB-118", sizeKB: 720, addedISO: dOff(-150), source: "manual" },
+    { id: "doc-17", deviceId: "dev-xfmr", type: "invoice", title: "Schneider invoice #SE-30921", sizeKB: 287, addedISO: dOff(-400), source: "ocr" }
+  ];
+
+  var SAMPLES = [
+    { id: "smp-dyson", filename: "croma_invoice_dyson.jpg", sizeKB: 1840, receipt: { merchant: "Croma Retail \u00b7 Store #0412", brand: "Dyson", model: "V15 Detect Absolute", serial: "K4B-US-PFW1234A", cost: 749, currency: "USD", warrantyMonths: 24, extendedMonths: 0, docType: "invoice", categorySuggestion: "hvac", confidence: { merchant: 0.98, serial: 0.96, date: 0.99, amount: 0.97, warranty: 0.90 } } },
+    { id: "smp-apc", filename: "amazon_apc_ups_invoice.pdf", sizeKB: 262, receipt: { merchant: "Amazon Business", brand: "APC", model: "Back-UPS 1600VA", serial: "3B1927X55112", cost: 212, currency: "USD", warrantyMonths: 36, extendedMonths: 12, docType: "invoice", categorySuggestion: "it", confidence: { merchant: 0.99, serial: 0.93, date: 0.99, amount: 0.99, warranty: 0.86 } } },
+    { id: "smp-crompton", filename: "crompton_warranty_card.jpg", sizeKB: 1210, receipt: { merchant: "Crompton Authorised Dealer", brand: "Crompton", model: "Arno Neo 1200mm Ceiling Fan", serial: "CGL240911876", cost: 38, currency: "USD", warrantyMonths: 24, extendedMonths: 0, docType: "warranty-card", categorySuggestion: "hvac", confidence: { merchant: 0.94, serial: 0.97, date: 0.92, amount: 0.88, warranty: 0.95 } } }
+  ];
+
+  /* ============================ engine =========================== */
+  var TIERS = { ok: { label: "COVERED", color: "#2fe0be" }, notice: { label: "60-DAY", color: "#a8e05f" }, warning: { label: "30-DAY", color: "#ffb224" }, critical: { label: "\u22647 DAYS", color: "#ff8a3d" }, expired: { label: "EXPIRED", color: "#ff6259" } };
+  var SEV = { critical: { label: "CRITICAL", color: "#ff6259" }, warning: { label: "WARNING", color: "#ffb224" }, info: { label: "NOTICE", color: "#6fb3ff" } };
+
+  function warrantyInfo(d, now) {
+    var start = new Date(d.purchaseISO).getTime();
+    var endISO = addMonthsISO(d.purchaseISO, d.warrantyMonths + d.extendedMonths);
+    var end = new Date(endISO).getTime();
+    var remainingDays = Math.round((end - now.getTime()) / DAY);
+    var pctElapsed = clamp((now.getTime() - start) / (end - start));
+    var tier = remainingDays < 0 ? "expired" : remainingDays <= 7 ? "critical" : remainingDays <= 30 ? "warning" : remainingDays <= 60 ? "notice" : "ok";
+    return { endISO: endISO, totalDays: Math.round((end - start) / DAY), remainingDays: remainingDays, pctElapsed: pctElapsed, tier: tier };
+  }
+  function healthColor(s) { return s >= 85 ? "#2fe0be" : s >= 70 ? "#a8e05f" : s >= 55 ? "#ffb224" : s >= 40 ? "#ff8a3d" : "#ff6259"; }
+  function computeHealth(d, logs, now) {
+    var rt = d.meta.runtimeHours || 0, life = d.expectedLifeYears;
+    var age = clamp(1 - ((now - new Date(d.purchaseISO)) / (DAY * 365.25)) / life);
+    var stress;
+    if (d.category === "portable") stress = clamp(clamp((d.meta.soh == null ? 95 : d.meta.soh) / 100) * 0.72 + clamp(1 - (d.meta.cycles || 0) / 1200) * 0.28);
+    else if (d.category === "hvac") stress = clamp(1 - rt / (life * 1900));
+    else if (d.category === "it") stress = clamp(clamp((d.meta.uptimePct == null ? 99 : d.meta.uptimePct) / 100) * 0.6 + clamp((d.meta.connectivity == null ? 97 : d.meta.connectivity) / 100) * 0.4);
+    else stress = clamp(clamp(1 - (d.meta.vibration == null ? 2 : d.meta.vibration) / 7.1) * 0.42 + clamp(1 - rt / (life * 3200)) * 0.38 + clamp(((d.meta.powerFactor == null ? 0.94 : d.meta.powerFactor) - 0.8) / 0.2) * 0.2);
+    var maint;
+    if (!d.schedules.length) maint = 0.75;
+    else {
+      var sc = d.schedules.map(function (s) {
+        if (s.kind === "time" && s.everyDays && s.lastDoneISO) { var el = (now - new Date(s.lastDoneISO)) / DAY; return clamp(1 - Math.max(0, el - s.everyDays) / s.everyDays); }
+        if (s.kind === "runtime" && s.everyHours && s.lastDoneHours != null) { var used = rt - s.lastDoneHours; return clamp(1 - Math.max(0, used - s.everyHours) / s.everyHours); }
+        return 0.75;
+      });
+      maint = clamp(sc.reduce(function (a, b) { return a + b; }, 0) / sc.length + (logs.length ? clamp(0.08 * logs.length, 0, 0.15) : 0));
+    }
+    var failures = logs.filter(function (l) { return /fault|fail|repair|replac/i.test(l.action); }).length;
+    var incidents = clamp(1 - d.issues * 0.28 - failures * 0.06);
+    var score = Math.round(100 * (age * 0.28 + stress * 0.3 + maint * 0.24 + incidents * 0.18));
+    var grade = score >= 85 ? "A" : score >= 70 ? "B" : score >= 55 ? "C" : score >= 40 ? "D" : "E";
+    var trend = d.issues === 0 && maint > 0.82 ? 2 : d.issues > 1 ? -3 : maint < 0.55 ? -1 : 0;
+    return { score: score, grade: grade, trend: trend, parts: { age: age, stress: stress, maintenance: maint, incidents: incidents } };
+  }
+  function depreciatedValue(d, health, now) {
+    var usedMonths = Math.max(0, (now - new Date(d.purchaseISO)) / (DAY * 30.44));
+    var straight = d.cost * Math.max(0.05, 1 - usedMonths / (d.expectedLifeYears * 12));
+    return Math.round(straight * (0.55 + 0.45 * (health / 100)));
+  }
+  function valueCurve(d, health, n) {
+    var lm = d.expectedLifeYears * 12, adj = 0.55 + 0.45 * (health / 100);
+    return Array.from({ length: n || 48 }, function (_, i) {
+      var m = (i / ((n || 48) - 1)) * lm;
+      return Math.round(d.cost * Math.max(0.05, 1 - m / lm) * (m <= lm * 0.4 ? 1 : adj + (1 - adj) * 0.35));
+    });
+  }
+  function nextServices(d, now) {
+    var rt = d.meta.runtimeHours || 0;
+    return d.schedules.map(function (rule) {
+      if (rule.kind === "time" && rule.everyDays && rule.lastDoneISO) {
+        var due = new Date(rule.lastDoneISO).getTime() + rule.everyDays * DAY;
+        var rem = Math.round((due - now) / DAY);
+        var st = rem < 0 ? "overdue" : rem <= 14 ? "soon" : "ok";
+        return { rule: rule, state: st, remainingLabel: rem < 0 ? -rem + "d overdue" : rem === 0 ? "due today" : "in " + rem + "d" };
+      }
+      var used = rt - (rule.lastDoneHours || 0);
+      var rh = Math.round((rule.everyHours || 0) - used);
+      var st2 = rh < 0 ? "overdue" : rh <= 50 ? "soon" : "ok";
+      return { rule: rule, state: st2, remainingLabel: rh < 0 ? -rh + "h overdue" : rh + "h left" };
+    }).sort(function (a, b) {
+      var r = { overdue: 0, soon: 1, ok: 2 };
+      return r[a.state] - r[b.state] || a.rule.label.localeCompare(b.rule.label);
+    });
+  }
+  function buildAlerts(devices, logsBy, rules, now) {
+    var out = [];
+    devices.forEach(function (d) {
+      var w = warrantyInfo(d, now);
+      var ch = function (k) { return rules.channels[k]; };
+      if (w.tier === "expired" && rules.thresholds.indexOf(0) >= 0)
+        out.push({ id: d.id + "-w0", severity: "critical", kind: "warranty", deviceId: d.id, deviceName: d.name, title: "Warranty expired", detail: d.brand + " coverage lapsed " + fmtDate(w.endISO) + " \u2014 " + (-w.remainingDays) + "d ago. Consider extended cover.", channels: ch("warranty") });
+      else if (w.tier === "critical" && rules.thresholds.indexOf(7) >= 0)
+        out.push({ id: d.id + "-w7", severity: "critical", kind: "warranty", deviceId: d.id, deviceName: d.name, title: "Warranty ends in " + w.remainingDays + "d", detail: "Final window to file pre-expiry claims. Packet auto-assembled from vault documents.", channels: ch("warranty") });
+      else if (w.tier === "warning" && rules.thresholds.indexOf(30) >= 0)
+        out.push({ id: d.id + "-w30", severity: "warning", kind: "warranty", deviceId: d.id, deviceName: d.name, title: "Warranty ends in " + w.remainingDays + "d", detail: "Schedule any pending pre-expiry inspections before " + fmtDate(w.endISO) + ".", channels: ch("warranty") });
+      else if (w.tier === "notice" && rules.thresholds.indexOf(60) >= 0)
+        out.push({ id: d.id + "-w60", severity: "info", kind: "warranty", deviceId: d.id, deviceName: d.name, title: "60-day warranty notice", detail: d.name + " exits coverage on " + fmtDate(w.endISO) + ". Reminder cadence armed.", channels: ch("warranty") });
+      nextServices(d, now).filter(function (s) { return s.state !== "ok"; }).forEach(function (s) {
+        out.push({ id: d.id + "-s-" + s.rule.id, severity: s.state === "overdue" ? "critical" : "warning", kind: "service", deviceId: d.id, deviceName: d.name, title: s.rule.label + " \u2014 " + s.remainingLabel, detail: s.rule.kind === "time" ? "Interval: every " + s.rule.everyDays + " days. Last completed " + (s.rule.lastDoneISO ? fmtDate(s.rule.lastDoneISO) : "\u2014") + "." : "Interval: every " + s.rule.everyHours + " run-hours at current duty cycle.", channels: ch("service") });
+      });
+      var h = computeHealth(d, logsBy[d.id] || [], now);
+      if (h.score < 55)
+        out.push({ id: d.id + "-h", severity: h.score < 40 ? "critical" : "warning", kind: "health", deviceId: d.id, deviceName: d.name, title: "Health index at " + h.score + "%", detail: "Grade " + h.grade + ". Recommended: full diagnostic within 14 days.", channels: ch("health") });
+    });
+    var r = { critical: 0, warning: 1, info: 2 };
+    return out.sort(function (a, b) { return r[a.severity] - r[b.severity] || a.title.localeCompare(b.title); });
+  }
+  function buildClaimHTML(d, issue, docTitles, logs, w, health) {
+    var rows = logs.map(function (l) { return "<tr><td>" + fmtDate(l.dateISO) + "</td><td>" + esc(l.provider) + "</td><td>" + esc(l.action) + "</td><td>" + esc(l.parts || "\u2014") + "</td><td>" + fmtMoney(l.cost, d.currency) + "</td></tr>"; }).join("");
+    return "<!doctype html><html><head><meta charset=\"utf-8\"><title>Claim \u2014 " + esc(d.name) + "</title><style>body{font-family:'Segoe UI',Arial,sans-serif;color:#14203c;max-width:760px;margin:32px auto;padding:0 24px}h1{font-size:20px;border-bottom:3px solid #14203c;padding-bottom:8px}h2{font-size:14px;margin-top:28px;text-transform:uppercase;letter-spacing:.08em;color:#5a6a8c}table{width:100%;border-collapse:collapse;font-size:12px}td,th{border:1px solid #c9d4ea;padding:6px 8px;text-align:left}th{background:#eef2fa}.badge{display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;color:#fff;background:" + (w.remainingDays >= 0 ? "#0e9f6e" : "#e02424") + "}.meta{font-size:12px;color:#5a6a8c}.sig{margin-top:40px;display:flex;gap:60px;font-size:12px}</style></head><body>" +
+      "<h1>WARRANTY / INSURANCE CLAIM PACKET</h1>" +
+      "<p class=\"meta\">Generated by ElectroCare OS \u00b7 " + fmtDate(new Date().toISOString()) + " \u00b7 Ref EC-" + d.serial.slice(-6).toUpperCase() + "</p>" +
+      "<h2>1 \u00b7 Asset identification</h2>" +
+      "<table><tr><th>Asset</th><td>" + esc(d.brand + " " + d.name) + "</td><th>Serial / IMEI</th><td>" + esc(d.serial) + "</td></tr>" +
+      "<tr><th>Category</th><td>" + d.category + "</td><th>Location</th><td>" + esc(d.location) + "</td></tr>" +
+      "<tr><th>Purchased</th><td>" + fmtDate(d.purchaseISO) + " \u00b7 " + fmtMoney(d.cost, d.currency) + "</td><th>Coverage status</th><td><span class=\"badge\">" + (w.remainingDays >= 0 ? "IN WARRANTY \u00b7 " + w.remainingDays + "d LEFT" : "OUT OF WARRANTY") + "</span></td></tr></table>" +
+      "<h2>2 \u00b7 Reported issue</h2><p>" + esc(issue || "\u2014") + "</p>" +
+      "<h2>3 \u00b7 Attached evidence (" + docTitles.length + ")</h2><ul>" + docTitles.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul>" +
+      "<h2>4 \u00b7 Service history</h2>" +
+      "<table><tr><th>Date</th><th>Provider</th><th>Action</th><th>Parts</th><th>Cost</th></tr>" + (rows || "<tr><td colspan=\"5\">No prior interventions recorded</td></tr>") + "</table>" +
+      "<h2>5 \u00b7 Diagnostics summary</h2><p>Asset Health Index: <b>" + health + "/100</b> at time of claim. Telemetry snapshots and OCR-verified purchase documents are embedded in the digital annex.</p>" +
+      "<div class=\"sig\"><div>_____________________<br>Claimant signature</div><div>_____________________<br>OEM / Insurer stamp</div></div></body></html>";
+  }
+  function downloadFile(name, content) {
+    var blob = new Blob([content], { type: "text/html" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 800);
+  }
+
+  /* ============================ state ============================ */
+  var S = {
+    view: "overview", category: "all", sel: "dev-mbp", query: "",
+    acked: {}, rules: { channels: { warranty: ["push", "email", "whatsapp"], service: ["push", "calendar"], health: ["push", "email"] }, thresholds: [60, 30, 7, 0] },
+    logs: LOGS.slice(), docs: DOCS.slice(), devices: DEVICES,
+    claim: null, docFilter: "all", sevFilter: "all", bpTab: "schema",
+    logOpen: null, linkId: "", pulseIdx: 0, scan: null
+  };
+  var NOW = new Date();
+  function logsBy() {
+    var m = {};
+    S.logs.forEach(function (l) { (m[l.deviceId] = m[l.deviceId] || []).push(l); });
+    return m;
+  }
+  function alerts() { return buildAlerts(S.devices, logsBy(), S.rules, NOW).filter(function (a) { return !S.acked[a.id]; }); }
+  function filteredDevices() { return S.category === "all" ? S.devices : S.devices.filter(function (d) { return d.category === S.category; }); }
+
+  /* ========================= svg builders ======================== */
+  function ring(score, size, stroke, inner) {
+    var r = (size - stroke) / 2, C = 2 * Math.PI * r, col = healthColor(score);
+    return '<div style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:' + size + 'px;height:' + size + 'px;flex:none">' +
+      '<svg width="' + size + '" height="' + size + '" style="transform:rotate(-90deg)">' +
+      '<circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" stroke="rgba(44,61,99,.35)" stroke-width="' + stroke + '"/>' +
+      '<circle class="ring-arc" data-c="' + (C * (1 - score / 100)) + '" cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" stroke="' + col + '" stroke-width="' + stroke + '" stroke-linecap="round" stroke-dasharray="' + C + '" stroke-dashoffset="' + C + '" style="filter:drop-shadow(0 0 6px ' + col + '55)"/>' +
+      '</svg><div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">' + inner + '</div></div>';
+  }
+  function spark(points, color, h, capacity) {
+    var W = 300, H = 80;
+    var min = Math.min.apply(null, points.concat(capacity != null ? [capacity] : []));
+    var max = Math.max.apply(null, points.concat(capacity != null ? [capacity] : []));
+    var pad = (max - min) * 0.15 || 1; var lo = min - pad, hi = max + pad;
+    var X = function (i) { return (i / (points.length - 1)) * W; };
+    var Y = function (v) { return H - ((v - lo) / (hi - lo)) * H; };
+    var line = points.map(function (p, i) { return (i ? "L" : "M") + X(i).toFixed(1) + "," + Y(p).toFixed(1); }).join(" ");
+    var gid = "g" + Math.floor(Math.random() * 1e9);
+    var cap = capacity != null ? '<line x1="0" x2="' + W + '" y1="' + Y(capacity) + '" y2="' + Y(capacity) + '" stroke="' + color + '" stroke-opacity=".35" stroke-dasharray="4 5" vector-effect="non-scaling-stroke"/>' : "";
+    var last = points[points.length - 1];
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" style="width:100%;height:' + h + 'px;display:block">' +
+      '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="' + color + '" stop-opacity=".28"/><stop offset="100%" stop-color="' + color + '" stop-opacity=".02"/></linearGradient></defs>' +
+      cap + '<path d="' + line + ' L' + W + ',' + H + ' L0,' + H + ' Z" fill="url(#' + gid + ')"/>' +
+      '<path d="' + line + '" fill="none" stroke="' + color + '" stroke-width="1.8" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>' +
+      '<circle cx="' + X(points.length - 1) + '" cy="' + Y(last) + '" r="3" fill="' + color + '"><animate attributeName="opacity" values="1;.35;1" dur="1.8s" repeatCount="indefinite"/></circle></svg>';
+  }
+  function factorBar(label, v, delay) {
+    var pct = Math.round(v * 100);
+    return '<div><div style="display:flex;justify-content:space-between;align-items:baseline;font-size:11px;margin-bottom:4px"><span style="color:var(--dim)">' + label + '</span><span class="num" style="color:' + healthColor(pct) + '">' + pct + '</span></div>' +
+      '<div style="height:5px;border-radius:2px;background:var(--panel3);overflow:hidden"><div class="rv" style="height:100%;width:' + pct + '%;background:' + healthColor(pct) + ';animation-delay:' + (delay || 0) + 's"></div></div></div>';
+  }
+
+  /* ========================= html builders ======================= */
+  function head(label, right) {
+    return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:16px;flex-wrap:wrap"><span class="tech-label" style="display:inline-flex;align-items:center;gap:8px"><span style="display:inline-block;width:5px;height:5px;transform:rotate(45deg);background:var(--amber)"></span>' + label + '</span>' + (right || "") + '</div>';
+  }
+  function chipHTML(active, color, label, action, dataAttr) {
+    var st = active ? 'border-color:' + (color || "#ffb224") + '99;color:' + (color || "#ffb224") + ';background:' + (color || "#ffb224") + '14' : "";
+    return '<button class="chip fchip" style="' + st + '" data-a="' + action + '" ' + (dataAttr || "") + '>' + label + '</button>';
+  }
+  function toast(msg, kind) {
+    var el = document.createElement("div");
+    el.className = "toast panel";
+    el.style.borderLeftColor = kind === "warn" ? "var(--amber)" : kind === "info" ? "var(--sky)" : "var(--teal)";
+    el.innerHTML = ico(kind === "warn" ? "alert" : kind === "info" ? "info" : "okc", 15) + '<span style="color:rgba(233,239,250,.9)">' + msg + "</span>";
+    el.onclick = function () { el.remove(); };
+    $("#toasts").appendChild(el);
+    setTimeout(function () { if (el.parentNode) el.remove(); }, 3400);
+  }
+
+  /* ------------------------- overview ---------------------------- */
+  function viewOverview() {
+    var list = filteredDevices();
+    var lb = logsBy();
+    var hs = {}; list.forEach(function (d) { hs[d.id] = computeHealth(d, lb[d.id] || [], NOW); });
+    var avg = list.length ? Math.round(list.reduce(function (a, d) { return a + hs[d.id].score; }, 0) / list.length) : 0;
+    var totalValue = list.reduce(function (a, d) { return a + depreciatedValue(d, hs[d.id].score, NOW); }, 0);
+    var covered = list.filter(function (d) { return warrantyInfo(d, NOW).remainingDays >= 0; }).length;
+    var al = alerts();
+    var queue = [];
+    list.forEach(function (d) { nextServices(d, NOW).filter(function (s) { return s.state !== "ok"; }).forEach(function (s) { queue.push({ s: s, dev: d }); }); });
+    queue.sort(function (a, b) { var r = { overdue: 0, soon: 1 }; return (r[a.s.state] == null ? 2 : r[a.s.state]) - (r[b.s.state] == null ? 2 : r[b.s.state]); });
+    queue = queue.slice(0, 6);
+
+    var stat = function (l, v) { return '<div style="border:1px solid var(--line);border-radius:6px;background:rgba(20,29,49,.6);padding:10px 12px"><div style="font-size:9px;letter-spacing:.18em;color:var(--faint)">' + l + '</div><div style="margin-top:4px">' + v + '</div></div>'; };
+
+    var html = '<div class="flexwrap rv">' +
+      '<span class="tech-label" style="display:inline-flex;align-items:center;gap:8px;margin-right:8px"><span class="pulse-dot" style="width:6px;height:6px;border-radius:99px;background:var(--teal)"></span> LIVE FLEET \u00b7 ' + list.length + ' ASSETS</span>' +
+      chipHTML(S.category === "all", null, "ALL", "cat", 'data-c="all"') +
+      CATS.map(function (c) { return chipHTML(S.category === c.id, c.color, '<span style="display:inline-block;width:6px;height:6px;border-radius:99px;background:' + c.color + '"></span>' + c.short.toUpperCase(), "cat", 'data-c="' + c.id + '"'); }).join("") +
+      "</div>";
+
+    html += '<div class="grid g12" style="margin-top:16px">';
+
+    /* vitals */
+    html += '<section class="c4 rs2 rv" style="animation-delay:.02s"><div class="panel panel-live" style="height:100%;padding:20px;display:flex;flex-direction:column">' +
+      head("Fleet Vitals") +
+      '<div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap">' +
+      ring(avg, 128, 10, '<span class="num" style="font-size:30px;font-weight:600;color:' + healthColor(avg) + '">' + avg + '</span><span style="margin-top:4px;font-size:9px;letter-spacing:.22em;color:var(--faint)">HEALTH IDX</span>') +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1;min-width:180px">' +
+      stat("ASSETS", '<span class="num" style="font-size:20px;font-weight:600" data-count="' + list.length + '">0</span>') +
+      stat("PORTFOLIO", '<span class="num" style="font-size:20px;font-weight:600">$<span data-count="' + totalValue + '">0</span></span>') +
+      stat("COVERED", '<span class="num" style="font-size:20px;font-weight:600">' + covered + '<span style="font-size:12px;color:var(--faint)">/' + list.length + "</span></span>") +
+      stat("OPEN ALERTS", '<span class="num" style="font-size:20px;font-weight:600;color:var(--coral)">' + al.length + "</span>") +
+      "</div></div>" +
+      '<div style="margin-top:24px;display:flex;flex-direction:column;gap:10px">' +
+      CATS.map(function (c, i) {
+        var n = S.devices.filter(function (d) { return d.category === c.id; }).length;
+        var pct = S.devices.length ? (n / S.devices.length) * 100 : 0;
+        return '<button data-a="cat" data-c="' + (S.category === c.id ? "all" : c.id) + '" style="display:block;width:100%;text-align:left">' +
+          '<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:' + (S.category === c.id ? "var(--ink)" : "var(--dim)") + '">' + c.label + '</span><span class="num" style="color:var(--faint)">' + n + "</span></div>" +
+          '<div style="height:5px;border-radius:2px;background:var(--panel3);overflow:hidden"><div class="rv" style="height:100%;width:' + pct + "%;background:" + c.color + ";animation-delay:" + (0.1 + i * 0.06) + 's"></div></div></button>';
+      }).join("") + "</div>" +
+      '<p style="margin:auto 0 0;padding-top:20px;font-size:10.5px;line-height:1.6;color:var(--faint)">Health index blends age, operational stress, maintenance adherence and incident history \u2014 recomputed on every ledger write.</p>' +
+      "</div></section>";
+
+    /* warranty horizon */
+    var sorted = list.slice().sort(function (a, b) { return warrantyInfo(a, NOW).remainingDays - warrantyInfo(b, NOW).remainingDays; });
+    var minT = Infinity, maxT = -Infinity;
+    sorted.forEach(function (d) { var w = warrantyInfo(d, NOW); minT = Math.min(minT, new Date(d.purchaseISO).getTime()); maxT = Math.max(maxT, new Date(w.endISO).getTime()); });
+    maxT = Math.max(maxT, NOW.getTime() + 90 * DAY);
+    var span = maxT - minT;
+    var pctOf = function (t) { return ((t - minT) / span * 100).toFixed(2) + "%"; };
+    html += '<section class="c8 rv" style="animation-delay:.06s"><div class="panel panel-live" style="height:100%;padding:20px">' +
+      head("Warranty Horizon", '<div class="flexwrap" style="gap:6px">' + ["ok", "notice", "warning", "critical", "expired"].map(function (t) { return '<span class="chip" style="color:' + TIERS[t].color + ';border-color:' + TIERS[t].color + '44;padding:4px 8px">' + TIERS[t].label + "</span>"; }).join("") + "</div>") +
+      '<div style="position:relative">' +
+      '<div style="position:absolute;top:0;bottom:0;left:' + pctOf(NOW.getTime()) + ';width:1px;background:rgba(255,178,36,.7);z-index:2"><span class="num" style="position:absolute;top:-2px;left:6px;font-size:9px;letter-spacing:.14em;color:var(--amber)">NOW</span></div>' +
+      '<div style="display:flex;flex-direction:column;gap:6px">' +
+      sorted.map(function (d) {
+        var w = warrantyInfo(d, NOW);
+        var st = new Date(d.purchaseISO).getTime(), en = new Date(w.endISO).getTime();
+        var elEnd = Math.min(en, NOW.getTime());
+        var tier = TIERS[w.tier];
+        var remCol = w.remainingDays < 0 ? "#3a2430" : tier.color;
+        return '<button class="hz-row" data-a="open" data-id="' + d.id + '">' +
+          '<span class="hz-name">' + esc(d.name) + "</span>" +
+          '<span class="hz-track">' +
+          '<span style="position:absolute;top:0;bottom:0;left:' + pctOf(st) + ";width:" + Math.max(0, (elEnd - st) / span * 100) + "%;background:" + CAT[d.category].color + ';opacity:.45"></span>' +
+          '<span style="position:absolute;top:0;bottom:0;left:' + pctOf(Math.max(st, elEnd)) + ";width:" + Math.max(0.4, (en - Math.max(st, elEnd)) / span * 100) + "%;background:" + remCol + (w.tier === "critical" || w.tier === "expired" ? ";box-shadow:0 0 8px " + remCol : "") + '"></span>' +
+          "</span>" +
+          '<span class="hz-days" style="color:' + tier.color + '">' + (w.remainingDays < 0 ? -w.remainingDays + "d ago" : w.remainingDays + "d") + "</span></button>";
+      }).join("") + "</div></div></div></section>";
+
+    /* alert matrix */
+    html += '<section class="c4 rv" style="animation-delay:.08s"><div class="panel panel-live" style="height:100%;padding:20px">' +
+      head("Alert Matrix", '<button class="chip fchip" data-a="nav" data-v="alerts">CONFIGURE</button>') +
+      '<div style="display:flex;flex-direction:column;gap:8px">' +
+      al.slice(0, 6).map(function (a) {
+        var sv = SEV[a.severity];
+        return '<div class="group" style="display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-left:2px solid ' + sv.color + ';border-radius:6px;background:rgba(20,29,49,.5);padding:10px 12px">' +
+          '<div style="min-width:0;flex:1"><div style="font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(a.title) + '</div>' +
+          '<div style="margin-top:2px;font-size:10.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(a.deviceName) + " \u00b7 " + esc(a.detail) + "</div>" +
+          '<div style="margin-top:6px;display:flex;gap:6px">' + a.channels.map(function (c) { return '<span style="color:var(--faint)" title="' + CH_META[c].l + '">' + ico(CH_META[c].i, 11) + "</span>"; }).join("") + "</div></div>" +
+          '<button data-a="ack" data-id="' + a.id + '" aria-label="Acknowledge" style="border:1px solid var(--line);border-radius:4px;padding:4px;color:var(--faint);opacity:.45;transition:all .2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.45">' + ico("check", 12) + "</button></div>";
+      }).join("") +
+      (al.length === 0 ? '<div style="border:1px dashed var(--line);border-radius:6px;padding:24px;text-align:center;font-size:12px;color:var(--faint)">All clear \u2014 no unacknowledged alerts.</div>' : "") +
+      "</div></div></section>";
+
+    /* telemetry pulse */
+    html += '<section class="c4 rv" style="animation-delay:.09s" id="tele-wrap">' + telePanel(list) + "</section>";
+
+    /* maintenance queue */
+    html += '<section class="c6 rv" style="animation-delay:.1s"><div class="panel panel-live" style="height:100%;padding:20px">' +
+      head("Preventive Maintenance Queue", '<span style="color:var(--faint)">' + ico("wrench", 13) + "</span>") +
+      '<div style="display:flex;flex-direction:column;gap:6px">' +
+      queue.map(function (q) {
+        var col = q.s.state === "overdue" ? "#ff6259" : "#ffb224";
+        return '<div style="display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:6px;background:rgba(20,29,49,.4);padding:8px 12px">' +
+          '<span class="' + (q.s.state === "overdue" ? "pulse-dot-red" : "") + '" style="width:6px;height:6px;border-radius:99px;background:' + col + ';flex:none"></span>' +
+          '<div style="min-width:0;flex:1"><div style="font-size:12px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(q.s.rule.label) + '</div>' +
+          '<div style="font-size:10.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(q.dev.name) + " \u00b7 " + (q.s.rule.kind === "runtime" ? "runtime interval" : "calendar interval") + "</div></div>" +
+          '<span class="chip" style="color:' + col + ";border-color:" + col + '55;padding:4px 8px">' + q.s.remainingLabel.toUpperCase() + "</span>" +
+          '<button class="btn" style="padding:5px 9px;border-color:var(--line)" data-a="done" data-id="' + q.dev.id + '" data-label="' + esc(q.s.rule.label) + '">DONE</button></div>';
+      }).join("") +
+      (queue.length === 0 ? '<div style="border:1px dashed var(--line);border-radius:6px;padding:24px;text-align:center;font-size:12px;color:var(--faint)">No overdue or upcoming service \u2014 fleet is on schedule.</div>' : "") +
+      "</div></div></section>";
+
+    /* vault snapshot */
+    html += '<section class="c6 rv" style="animation-delay:.12s"><div class="panel panel-live" style="height:100%;padding:20px;display:flex;flex-direction:column">' +
+      head("Document Vault", '<span style="color:var(--faint)">' + ico("scan", 13) + "</span>") +
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">' +
+      DOC_TYPES.map(function (t) {
+        var n = S.docs.filter(function (dc) { return dc.type === t.id; }).length;
+        return '<div style="border:1px solid var(--line);border-radius:6px;background:rgba(20,29,49,.4);padding:10px 12px;transition:border-color .2s">' +
+          '<span style="color:var(--sky)">' + ico(t.ic, 14) + '</span><div class="num" style="margin-top:6px;font-size:18px;font-weight:600;line-height:1">' + n + '</div>' +
+          '<div style="margin-top:4px;font-size:9px;letter-spacing:.06em;line-height:1.3;color:var(--faint)">' + t.id.replace("-", " ").toUpperCase() + "</div></div>";
+      }).join("") + "</div>" +
+      '<div style="margin-top:auto;padding-top:16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">' +
+      '<span style="font-size:10.5px;color:var(--faint)">' + S.docs.length + " encrypted objects \u00b7 AES-256-GCM envelope</span>" +
+      '<button class="btn btn-amber" data-a="nav" data-v="vault">LAUNCH OCR SCANNER ' + ico("arrow", 12) + "</button></div></div></section>";
+
+    /* asset tiles */
+    html += '<section class="c12 rv" style="animation-delay:.14s"><div style="display:grid;gap:12px;grid-template-columns:1fr">' +
+      '<style>@media(min-width:640px){#tiles{grid-template-columns:repeat(2,1fr)!important}}@media(min-width:1280px){#tiles{grid-template-columns:repeat(4,1fr)!important}}</style>' +
+      '<div id="tiles" style="display:grid;gap:12px;grid-template-columns:1fr">' +
+      list.map(function (d, i) {
+        var h = hs[d.id], w = warrantyInfo(d, NOW), tier = TIERS[w.tier];
+        return '<button class="panel panel-live rv" data-a="open" data-id="' + d.id + '" style="position:relative;overflow:hidden;padding:16px;text-align:left;animation-delay:' + Math.min(i * 0.04, 0.4) + 's">' +
+          '<span style="position:absolute;left:0;right:0;top:0;height:2px;background:' + CAT[d.category].color + '"></span>' +
+          '<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div style="min-width:0">' +
+          '<div style="font-family:var(--fd);font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(d.name) + "</div>" +
+          '<div style="margin-top:2px;font-size:11px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(d.brand) + " \u00b7 " + esc(d.location) + "</div>" +
+          '<div class="num" style="margin-top:8px;font-size:10px;letter-spacing:.04em;color:var(--faint)">SN ' + esc(d.serial) + "</div></div>" +
+          ring(h.score, 54, 5, '<span class="num" style="font-size:13px;font-weight:600;color:' + healthColor(h.score) + '">' + h.score + "</span>") + "</div>" +
+          '<div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between">' +
+          '<span class="chip" style="color:' + tier.color + ";border-color:" + tier.color + '44;padding:4px 8px">' + tier.label + "</span>" +
+          '<span class="num" style="font-size:12px;font-weight:500;color:var(--dim)">' + fmtMoney(depreciatedValue(d, h.score, NOW), d.currency) + "</span></div></button>";
+      }).join("") + "</div></div></section>";
+
+    html += "</div>";
+    return html;
+  }
+
+  var pulseBuf = { a: [], b: [], devId: null };
+  function telePanel(list) {
+    var dev = list.length ? list[S.pulseIdx % list.length] : null;
+    if (!dev) return '<div class="panel panel-live" style="height:100%;padding:20px">' + head("Telemetry Pulse") + '<div style="padding:32px 0;text-align:center;font-size:12px;color:var(--faint)">No devices in this category.</div></div>';
+    if (pulseBuf.devId !== dev.id) {
+      pulseBuf.devId = dev.id;
+      pulseBuf.a = dev.telemetry[0].points.slice();
+      pulseBuf.b = dev.telemetry[1] ? dev.telemetry[1].points.slice() : [];
+    }
+    var col = CAT[dev.category].color;
+    var series = dev.telemetry.slice(0, 2).map(function (s, i) {
+      var buf = i === 0 ? pulseBuf.a : pulseBuf.b;
+      var last = buf.length ? buf[buf.length - 1] : s.points[s.points.length - 1];
+      return '<div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">' +
+        '<span style="font-size:10.5px;color:var(--dim)">' + s.label + '</span>' +
+        '<span class="num" style="font-size:13px;font-weight:600;color:' + col + '"><span id="tp-val-' + i + '">' + last.toFixed(s.decimals == null ? 1 : s.decimals) + '</span><span style="margin-left:4px;font-size:9px;font-weight:400;color:var(--faint)">' + s.unit + "</span></span></div>" +
+        '<div id="tp-spark-' + i + '">' + spark(buf.length > 1 ? buf : s.points, col, 44) + "</div></div>";
+    }).join("");
+    return '<div class="panel panel-live" style="height:100%;padding:20px">' +
+      head("Telemetry Pulse", '<span class="chip" style="color:' + col + ";border-color:" + col + '55;padding:4px 8px"><span class="pulse-dot" style="width:4px;height:4px;border-radius:99px;background:' + col + '"></span> STREAMING</span>') +
+      '<div style="font-family:var(--fd);font-size:13px;font-weight:600;color:var(--ink)">' + esc(dev.name) + "</div>" +
+      '<div style="padding-top:12px;display:flex;flex-direction:column;gap:12px" id="tp-series">' + series + "</div></div>";
+  }
+
+  /* -------------------------- assets ----------------------------- */
+  function visibleAssets() {
+    var q = S.query.trim().toLowerCase();
+    if (!q) return S.devices;
+    return S.devices.filter(function (d) { return [d.name, d.brand, d.serial, d.location, d.category].join(" ").toLowerCase().indexOf(q) >= 0; });
+  }
+  function viewAssets() {
+    var vis = visibleAssets();
+    var lb = logsBy();
+    var sel = null;
+    S.devices.forEach(function (d) { if (d.id === S.sel) sel = d; });
+    var listHtml = vis.map(function (d) {
+      var h = computeHealth(d, lb[d.id] || [], NOW), w = warrantyInfo(d, NOW), tier = TIERS[w.tier];
+      var active = d.id === S.sel;
+      return '<button data-a="sel" data-id="' + d.id + '" style="position:relative;width:100%;overflow:hidden;border-radius:6px;border:1px solid ' + (active ? "rgba(255,178,36,.5)" : "var(--line)") + ";background:" + (active ? "rgba(255,178,36,.07)" : "rgba(20,29,49,.4)") + ';padding:10px 12px;text-align:left;transition:all .2s">' +
+        '<span style="position:absolute;top:0;bottom:0;left:0;width:3px;background:' + CAT[d.category].color + '"></span>' +
+        '<div style="display:flex;align-items:center;gap:12px;padding-left:6px">' +
+        ring(h.score, 40, 4, '<span class="num" style="font-size:11px;font-weight:600;color:' + healthColor(h.score) + '">' + h.score + "</span>") +
+        '<div style="min-width:0;flex:1"><div style="font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(d.name) + "</div>" +
+        '<div style="font-size:10.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(d.brand) + ' \u00b7 <span class="num">SN ' + esc(d.serial.slice(0, 12)) + "</span></div>" +
+        '<div style="margin-top:4px;display:flex;gap:6px;align-items:center">' +
+        '<span class="chip" style="color:' + tier.color + ";border-color:" + tier.color + '44;padding:2px 6px;font-size:9px">' + tier.label + "</span>" +
+        (d.issues > 0 ? '<span class="chip" style="color:var(--coral);border-color:rgba(255,98,89,.4);padding:2px 6px;font-size:9px">' + d.issues + " ISSUE" + (d.issues > 1 ? "S" : "") + "</span>" : "") +
+        "</div></div></div></button>";
+    }).join("");
+
+    var html = '<div style="display:grid;gap:16px;grid-template-columns:1fr"><style>@media(min-width:1024px){#asset-grid{grid-template-columns:360px 1fr!important}}</style><div id="asset-grid" style="display:grid;gap:16px;grid-template-columns:1fr">' +
+      '<div class="panel rv" style="align-self:start;max-height:calc(100vh - 120px);overflow-y:auto;padding:12px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px 8px"><span class="tech-label">Registry \u00b7 ' + vis.length + "</span>" + (S.query ? '<span class="chip" style="padding:2px 8px">\u201c' + esc(S.query) + "\u201d</span>" : "") + "</div>" +
+      '<div id="reg-list" style="display:flex;flex-direction:column;gap:6px">' + listHtml +
+      (vis.length === 0 ? '<div style="border:1px dashed var(--line);border-radius:6px;padding:32px 12px;text-align:center;font-size:12px;color:var(--faint)">No assets match \u201c' + esc(S.query) + "\u201d.</div>" : "") +
+      "</div></div>" +
+      '<div class="rv" style="animation-delay:.05s">' + (sel ? detailHTML(sel) : emptyDetail()) + "</div></div></div>" +
+      (S.claim ? claimModalHTML(S.claim) : "");
+    return html;
+  }
+  function emptyDetail() {
+    return '<div class="panel" style="min-height:420px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:32px;text-align:center">' +
+      '<span class="float-y" style="opacity:.6;display:inline-block">' + bolt.replace('width="2.2"', "") + "</span>" +
+      '<p style="font-family:var(--fd);font-size:15px;font-weight:600;color:var(--dim)">Select an asset from the registry</p>' +
+      '<p style="max-width:320px;font-size:12px;line-height:1.6;color:var(--faint)">Health factors, coverage timeline, telemetry, maintenance ledger and one-click claim packets render here.</p></div>';
+  }
+  function detailHTML(d) {
+    var lb = logsBy(); var dlogs = lb[d.id] || [];
+    var h = computeHealth(d, dlogs, NOW), w = warrantyInfo(d, NOW), tier = TIERS[w.tier];
+    var services = nextServices(d, NOW);
+    var value = depreciatedValue(d, h.score, NOW);
+    var cat = CAT[d.category];
+    var docs = S.docs.filter(function (x) { return x.deviceId === d.id; });
+    var trendIco = h.trend > 0 ? '<span style="color:var(--teal)">' + ico("up", 10) + "</span>" : h.trend < 0 ? '<span style="color:var(--coral)">' + ico("down", 10) + "</span>" : ico("minus", 10);
+    var stressDesc = d.category === "portable" ? "SOH + charge cycles" : d.category === "hvac" ? "run-hours vs compressor life" : d.category === "it" ? "uptime + connectivity" : "vibration + load + power factor";
+
+    var html = '<div style="display:flex;flex-direction:column;gap:16px">' +
+      '<div class="panel" style="position:relative;overflow:hidden;padding:20px"><span style="position:absolute;left:0;right:0;top:0;height:2px;background:' + cat.color + '"></span>' +
+      '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:20px">' +
+      ring(h.score, 104, 9, '<span class="num" style="font-size:26px;font-weight:600;color:' + healthColor(h.score) + '">' + h.score + '</span><span style="margin-top:4px;display:flex;align-items:center;gap:4px;font-size:9px;letter-spacing:.18em;color:var(--faint)">GRADE ' + h.grade + trendIco + "</span>") +
+      '<div style="min-width:0;flex:1"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">' +
+      '<h2 style="margin:0;font-family:var(--fd);font-size:20px;font-weight:700;color:var(--ink)">' + esc(d.name) + "</h2>" +
+      '<span class="chip" style="color:' + cat.color + ";border-color:" + cat.color + '55;padding:4px 8px">' + cat.short.toUpperCase() + "</span>" +
+      '<span class="chip" style="padding:4px 8px;color:' + (d.status === "active" ? "var(--teal)" : "var(--amber)") + ";border-color:" + (d.status === "active" ? "rgba(47,224,190,.4)" : "rgba(255,178,36,.4)") + '">' + d.status.toUpperCase() + "</span></div>" +
+      '<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px 16px;font-size:11.5px;color:var(--dim)">' +
+      "<span>" + esc(d.brand) + '</span><span class="num">SN ' + esc(d.serial) + '</span><span style="display:inline-flex;align-items:center;gap:4px">' + ico("pin", 11) + " " + esc(d.location) + '</span><span class="num">Purchased ' + fmtDate(d.purchaseISO) + " \u00b7 " + fmtMoney(d.cost, d.currency) + "</span></div>" +
+      '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px">' +
+      Object.keys(d.specs).map(function (k) { return '<span class="chip">' + k + ': <b style="color:var(--dim)">' + esc(d.specs[k]) + "</b></span>"; }).join("") +
+      "</div></div>" +
+      '<button class="btn btn-amber" data-a="claim" data-id="' + d.id + '">' + ico("file", 14) + " 1-CLICK CLAIM PACKET</button>" +
+      "</div></div>";
+
+    html += '<div style="display:grid;gap:16px;grid-template-columns:1fr"><style>@media(min-width:1280px){#det-grid{grid-template-columns:1fr 1fr!important}}</style><div id="det-grid" style="display:grid;gap:16px;grid-template-columns:1fr">' +
+      '<div class="panel" style="padding:20px"><span class="tech-label">Health Index Decomposition</span>' +
+      '<div style="margin-top:16px;display:flex;flex-direction:column;gap:14px">' +
+      factorBar("Age vs expected lifecycle", h.parts.age, 0.05) +
+      factorBar("Operational stress (category model)", h.parts.stress, 0.1) +
+      factorBar("Maintenance adherence", h.parts.maintenance, 0.15) +
+      factorBar("Incident history", h.parts.incidents, 0.2) + "</div>" +
+      '<p style="margin:16px 0 0;font-size:10.5px;line-height:1.6;color:var(--faint)">Weighting \u2014 age 28% \u00b7 stress 30% \u00b7 maintenance 24% \u00b7 incidents 18%. Category-aware stress model: ' + stressDesc + ".</p></div>";
+
+    html += '<div class="panel" style="padding:20px"><div style="display:flex;align-items:center;justify-content:space-between"><span class="tech-label">Coverage & Residual Value</span><span class="chip" style="color:' + tier.color + ";border-color:" + tier.color + '55;padding:4px 8px">' + tier.label + "</span></div>" +
+      '<div style="margin-top:16px"><div style="position:relative;height:10px;border-radius:3px;background:#151e33;box-shadow:inset 0 0 0 1px var(--line);overflow:hidden">' +
+      '<div style="position:absolute;top:0;bottom:0;left:0;width:' + (w.pctElapsed * 100) + "%;background:" + cat.color + '55"></div>' +
+      '<div style="position:absolute;top:0;bottom:0;left:' + (w.pctElapsed * 100) + "%;width:" + ((1 - w.pctElapsed) * 100) + "%;background:" + tier.color + ";box-shadow:0 0 10px " + tier.color + '66"></div></div>' +
+      '<div class="num" style="margin-top:6px;display:flex;justify-content:space-between;font-size:10px;color:var(--faint)"><span>' + fmtDate(d.purchaseISO) + '</span><span style="color:' + tier.color + '">' + (w.remainingDays >= 0 ? w.remainingDays + " days remaining" : "expired " + (-w.remainingDays) + " days ago") + "</span><span>" + fmtDate(w.endISO) + "</span></div></div>" +
+      '<div style="margin-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px">' +
+      [["PAID", fmtMoney(d.cost, d.currency), null], ["RESIDUAL", fmtMoney(value, d.currency), healthColor(h.score)], ["COVERAGE", d.warrantyMonths + "+" + d.extendedMonths + " mo", null]].map(function (s) {
+        return '<div style="border:1px solid var(--line);border-radius:6px;background:rgba(20,29,49,.5);padding:10px 12px"><div style="font-size:9px;letter-spacing:.18em;color:var(--faint)">' + s[0] + '</div><div class="num" style="margin-top:4px;font-size:14px;font-weight:600;color:' + (s[2] || "var(--ink)") + '">' + s[1] + "</div></div>";
+      }).join("") + "</div>" +
+      '<div style="margin-top:16px"><div style="margin-bottom:4px;font-size:10.5px;color:var(--dim)">Depreciation curve \u00b7 ' + d.expectedLifeYears + "-year lifecycle</div>" + spark(valueCurve(d, h.score), cat.color, 52) + "</div></div>";
+
+    html += '<div class="panel" style="padding:20px"><span class="tech-label" style="display:inline-flex;align-items:center;gap:8px"><span class="pulse-dot" style="width:6px;height:6px;border-radius:99px;background:' + cat.color + '"></span> Live Telemetry \u00b7 ' + d.telemetry.length + " channels</span>" +
+      '<div style="margin-top:16px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">' +
+      d.telemetry.map(function (s) {
+        return '<div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px"><span style="font-size:11px;color:var(--dim)">' + s.label + '</span><span class="num" style="font-size:13px;font-weight:600;color:' + cat.color + '">' + s.points[s.points.length - 1].toFixed(s.decimals == null ? 1 : s.decimals) + '<span style="margin-left:4px;font-size:9px;font-weight:400;color:var(--faint)">' + s.unit + "</span></span></div>" + spark(s.points, cat.color, 46) + "</div>";
+      }).join("") + "</div></div>";
+
+    html += '<div class="panel" style="padding:20px"><span class="tech-label" style="display:inline-flex;align-items:center;gap:8px">' + ico("calendar", 12) + " Preventive Schedule Engine</span>" +
+      '<div style="margin-top:16px;display:flex;flex-direction:column;gap:8px">' +
+      services.map(function (s) {
+        var col = s.state === "overdue" ? "#ff6259" : s.state === "soon" ? "#ffb224" : "#2fe0be";
+        var open = S.logOpen === s.rule.id;
+        return '<div style="border:1px solid var(--line);border-radius:6px;background:rgba(20,29,49,.4);padding:12px">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="font-size:12.5px;font-weight:500;color:var(--ink)">' + esc(s.rule.label) + '</span><span class="chip" style="color:' + col + ";border-color:" + col + '44;padding:4px 8px">' + s.remainingLabel.toUpperCase() + "</span></div>" +
+          '<div style="margin-top:4px;font-size:10.5px;color:var(--faint)">Every ' + (s.rule.kind === "time" ? s.rule.everyDays + " days" : s.rule.everyHours + " run-hours") + (s.rule.lastDoneISO ? " \u00b7 last " + fmtDate(s.rule.lastDoneISO) : "") + (s.rule.lastDoneHours != null ? " \u00b7 last @" + s.rule.lastDoneHours + "h" : "") + "</div>" +
+          (open ? '<div style="margin-top:10px;display:flex;flex-wrap:wrap;align-items:center;gap:8px">' +
+            '<input class="inp" id="log-provider" value="Self" placeholder="Provider" style="width:130px">' +
+            '<input class="inp" id="log-cost" type="number" min="0" value="0" placeholder="Cost" style="width:90px">' +
+            '<button class="btn btn-teal" data-a="logsubmit" data-id="' + d.id + '" data-label="' + esc(s.rule.label) + '">LOG SERVICE</button></div>'
+            : '<button style="margin-top:8px;font-size:10.5px;font-weight:600;letter-spacing:.1em;color:var(--sky)" data-a="logopen" data-rule="' + s.rule.id + '">+ LOG COMPLETION</button>') +
+          "</div>";
+      }).join("") +
+      (services.length === 0 ? '<p style="font-size:12px;color:var(--faint)">No preventive rules defined for this asset.</p>' : "") +
+      "</div></div></div>";
+
+    var sorted = dlogs.slice().sort(function (a, b) { return new Date(b.dateISO) - new Date(a.dateISO); });
+    html += '<div class="panel" style="padding:20px"><span class="tech-label">Service & Repair Ledger \u00b7 ' + sorted.length + " entries</span>" +
+      '<div style="margin-top:12px;overflow-x:auto"><table><thead><tr><th>DATE</th><th>PROVIDER</th><th>ACTION</th><th>PARTS</th><th>PARTS WTY</th><th style="text-align:right">COST</th></tr></thead><tbody>' +
+      sorted.map(function (l) {
+        return "<tr><td class=\"num\" style=\"color:var(--dim)\">" + fmtDate(l.dateISO) + "</td><td style=\"color:var(--ink)\">" + esc(l.provider) + "</td><td>" + esc(l.action) + "</td><td>" + esc(l.parts || "\u2014") + "</td>" +
+          "<td>" + (l.wty ? '<span class="chip" style="color:var(--teal);border-color:rgba(47,224,190,.4);padding:2px 6px;font-size:9.5px">' + l.wty + " MO</span>" : '<span style="color:var(--faint)">\u2014</span>') + "</td>" +
+          '<td class="num" style="text-align:right;color:var(--ink)">' + (l.cost ? fmtMoney(l.cost, d.currency) : "\u2014") + "</td></tr>";
+      }).join("") +
+      (sorted.length === 0 ? '<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--faint)">No interventions recorded yet.</td></tr>' : "") +
+      "</tbody></table></div></div>";
+
+    html += '<div class="panel" style="padding:20px"><span class="tech-label">Linked Vault Documents \u00b7 ' + docs.length + "</span>" +
+      '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">' +
+      docs.map(function (doc) { return '<span class="chip" style="padding:7px 10px;font-size:11px"><span style="color:var(--sky)">' + ico(DOC_IC[doc.type], 12) + "</span> " + esc(doc.title) + ' <span style="color:var(--faint)">\u00b7 ' + DOC_LABEL[doc.type] + "</span></span>"; }).join("") +
+      (docs.length === 0 ? '<span style="font-size:12px;color:var(--faint)">No documents linked \u2014 scan one from the Vault.</span>' : "") +
+      "</div></div></div>";
+    return html;
+  }
+  function claimModalHTML(d) {
+    var lb = logsBy(); var dlogs = lb[d.id] || [];
+    var w = warrantyInfo(d, NOW), h = computeHealth(d, dlogs, NOW);
+    var docTitles = S.docs.filter(function (x) { return x.deviceId === d.id; }).map(function (x) { return DOC_LABEL[x.type] + " \u2014 " + x.title; });
+    if (!docTitles.length) docTitles = ["No vault documents attached"];
+    return '<div class="modal-bg" data-a="x-claim-bg"><div class="scrim"></div><div class="modal panel"><div style="padding:24px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:2px solid var(--line);padding-bottom:12px">' +
+      '<div><div style="font-family:var(--fd);font-size:16px;font-weight:700;letter-spacing:.04em;color:var(--ink)">WARRANTY / INSURANCE CLAIM PACKET</div>' +
+      '<div class="num" style="margin-top:2px;font-size:10.5px;color:var(--faint)">Ref EC-' + d.serial.slice(-6).toUpperCase() + " \u00b7 generated " + fmtDate(NOW.toISOString()) + "</div></div>" +
+      '<span class="chip" style="padding:6px 10px;font-size:10px;font-weight:700;color:' + (w.remainingDays >= 0 ? "var(--teal)" : "var(--coral)") + ";border-color:" + (w.remainingDays >= 0 ? "rgba(47,224,190,.4)" : "rgba(255,98,89,.4)") + ";background:" + (w.remainingDays >= 0 ? "rgba(47,224,190,.08)" : "rgba(255,98,89,.08)") + '">' +
+      (w.remainingDays >= 0 ? "IN WARRANTY \u00b7 " + w.remainingDays + "D LEFT" : "OUT OF WARRANTY") + "</span></div>" +
+      '<div style="margin-top:16px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px"><style>@media(min-width:640px){#claim-meta{grid-template-columns:repeat(4,1fr)!important}}</style><div id="claim-meta" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;grid-column:1/-1">' +
+      [["ASSET", d.brand + " " + d.name], ["SERIAL", d.serial], ["PURCHASED", fmtDate(d.purchaseISO)], ["HEALTH IDX", h.score + "/100 (grade " + h.grade + ")"]].map(function (f) {
+        return '<div style="border:1px solid var(--line);border-radius:6px;background:rgba(20,29,49,.5);padding:8px 12px"><div style="font-size:8.5px;letter-spacing:.18em;color:var(--faint)">' + f[0] + '</div><div class="num" style="margin-top:2px;font-size:11px;word-break:break-word;color:var(--ink)">' + esc(f[1]) + "</div></div>";
+      }).join("") + "</div></div>" +
+      '<div style="margin-top:16px"><div style="font-size:9.5px;letter-spacing:.18em;color:var(--faint)">REPORTED ISSUE (editable)</div>' +
+      '<textarea id="claim-issue" rows="3" placeholder="Describe the fault, when it occurs, error codes\u2026" style="margin-top:6px;width:100%;border-radius:6px;border:1px solid var(--line);background:var(--panel);padding:12px;font-size:12px"></textarea></div>' +
+      '<div style="margin-top:16px"><div style="font-size:9.5px;letter-spacing:.18em;color:var(--faint)">AUTO-ASSEMBLED EVIDENCE</div><div style="margin-top:6px;display:flex;flex-direction:column;gap:4px">' +
+      docTitles.map(function (t) { return '<div style="display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:4px;background:rgba(20,29,49,.4);padding:6px 10px;font-size:11.5px;color:var(--dim)"><span style="color:var(--teal)">' + ico("shield", 12) + "</span> " + esc(t) + "</div>"; }).join("") +
+      '<div style="display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:4px;background:rgba(20,29,49,.4);padding:6px 10px;font-size:11.5px;color:var(--dim)"><span style="color:var(--teal)">' + ico("clip", 12) + "</span> Service history \u2014 " + dlogs.length + " ledger entries</div>" +
+      '<div style="display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:4px;background:rgba(20,29,49,.4);padding:6px 10px;font-size:11.5px;color:var(--dim)"><span style="color:var(--teal)">' + ico("receipt", 12) + "</span> OCR-verified proof of purchase (" + fmtMoney(d.cost, d.currency) + ")</div></div></div>" +
+      '<div style="margin-top:20px;display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px">' +
+      '<button class="btn" data-a="copy-claim" data-id="' + d.id + '">' + ico("copy", 13) + " COPY JSON</button>" +
+      '<button class="btn btn-solid" data-a="dl-claim" data-id="' + d.id + '">' + ico("download", 13) + " DOWNLOAD PACKET</button>" +
+      "</div></div></div></div>";
+  }
+
+  /* --------------------------- vault ----------------------------- */
+  function viewVault() {
+    var sc = S.scan;
+    var phases = ["INGEST \u00b7 hash + format probe", "OCR \u00b7 gpt-4o vision (detail=high)", "EXTRACT \u00b7 JSON-mode structured fields", "VALIDATE \u00b7 serial checksum + date ISO"];
+    var phaseHtml = phases.map(function (p, i) {
+      var st = !sc ? "idle" : sc.phase > i || sc.phase === 4 ? "done" : sc.phase === i ? "run" : "wait";
+      var ic = st === "done" ? '<span style="color:var(--teal)">' + ico("okc", 12) + "</span>" : st === "run" ? '<span style="color:var(--amber);display:inline-flex" class="spin">' + ico("clock", 12) + "</span>" : '<span style="opacity:.4">' + ico("minus", 12) + "</span>";
+      return '<div style="display:flex;align-items:center;gap:6px;font-size:10px;white-space:nowrap">' + ic + '<span style="color:' + (st === "run" ? "var(--ink)" : "var(--faint)") + '">' + p + "</span></div>";
+    }).join("");
+
+    var html = '<div style="display:grid;gap:16px;grid-template-columns:1fr"><style>@media(min-width:1280px){#vault-grid{grid-template-columns:1fr 400px!important}}</style><div id="vault-grid" style="display:grid;gap:16px;grid-template-columns:1fr">' +
+      '<div class="panel rv" style="padding:20px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+      '<span class="tech-label" style="display:inline-flex;align-items:center;gap:8px"><span class="pulse-dot" style="width:6px;height:6px;border-radius:99px;background:var(--teal)"></span> OCR INTAKE PIPELINE</span>' +
+      (sc && sc.phase < 4 ? '<button class="chip fchip" data-a="abort-scan">' + ico("x", 11) + " ABORT</button>" : "") + "</div>" +
+      '<div class="dropzone" id="dropzone">' + (sc && sc.phase < 4 ? '<div class="sweep scan-sweep"></div>' : "") +
+      '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:16px">' +
+      '<span style="color:' + (sc && sc.phase < 4 ? "var(--teal)" : "var(--faint)") + '">' + ico("upload", 30) + "</span>" +
+      '<div style="min-width:0;flex:1"><div style="font-family:var(--fd);font-size:14px;font-weight:600;color:var(--ink)">Drop a receipt, warranty card or invoice</div>' +
+      '<div style="margin-top:2px;font-size:11.5px;color:var(--faint)">JPG / PNG / PDF up to 12 MB \u2014 parsed by the vision \u03bb, encrypted AES-256-GCM before S3 upload.</div></div>' +
+      '<label class="btn" style="cursor:pointer">BROWSE<input id="file-in" type="file" accept="image/*,application/pdf" style="display:none"></label></div>' +
+      '<div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(30,42,68,.7);display:flex;flex-wrap:wrap;align-items:center;gap:8px">' +
+      '<span style="font-size:9.5px;letter-spacing:.18em;color:var(--faint)">DEMO SCANS:</span>' +
+      SAMPLES.map(function (s) { return '<button class="chip fchip" data-a="scan" data-file="' + s.id + '">' + ico("file", 11) + " " + s.filename + "</button>"; }).join("") +
+      "</div></div>" +
+      '<div style="margin-top:16px;border:1px solid var(--line);border-radius:8px;background:#0a101d;padding:16px">' +
+      '<div style="display:grid;gap:8px;grid-template-columns:repeat(2,1fr)"><style>@media(min-width:640px){#phases{grid-template-columns:repeat(4,1fr)!important}}</style><div id="phases" style="display:grid;gap:8px;grid-template-columns:repeat(2,1fr);grid-column:1/-1">' + phaseHtml + "</div></div>" +
+      '<div id="scan-console" class="num" style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(30,42,68,.7);height:124px;overflow-y:auto;font-size:11px;line-height:1.7;color:var(--dim)">' + consoleHTML() + "</div></div></div>" +
+      '<div class="panel rv" style="padding:20px;display:flex;flex-direction:column;animation-delay:.06s"><span class="tech-label">ExtractedReceipt \u00b7 structured output</span>' +
+      '<div id="scan-result" style="flex:1;display:flex;flex-direction:column;margin-top:16px">' + resultHTML() + "</div></div></div>" + vaultGridHTML();
+    return html;
+  }
+  function consoleHTML() {
+    var sc = S.scan;
+    if (!sc || !sc.lines.length) return '<span style="color:var(--faint)">// pipeline idle \u2014 awaiting document<span class="blink">\u258c</span></span>';
+    return sc.lines.map(function (l) { return '<div class="rv" style="animation-duration:.25s;white-space:pre-wrap"><span style="color:var(--teal)">\u203a</span> ' + esc(l) + "</div>"; }).join("") + (sc.phase < 4 ? '<span class="blink" style="color:var(--teal)">\u258c</span>' : "");
+  }
+  function resultHTML() {
+    var sc = S.scan;
+    if (!sc || sc.phase < 4 || !sc.result) {
+      return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 0;text-align:center">' +
+        '<span class="float-y" style="opacity:.7;color:var(--line2)">' + ico("scan", 46) + "</span>" +
+        '<p style="max-width:240px;font-size:11.5px;line-height:1.6;color:var(--faint)">Structured fields land here: merchant, serial, purchase date, cost, warranty months and category suggestion \u2014 with per-field confidence.</p></div>';
+    }
+    var r = sc.result;
+    var rows = [["merchant", r.merchant], ["brand / model", r.brand + " " + r.model], ["serial / IMEI", r.serial], ["purchase date", fmtDate(r.purchaseISO)], ["cost", r.cost.toFixed(2) + " " + r.currency], ["warranty", r.warrantyMonths + " mo" + (r.extendedMonths ? " + " + r.extendedMonths + " mo ext" : "")], ["doc type", DOC_LABEL[r.docType]], ["category (suggested)", r.categorySuggestion.toUpperCase()]];
+    return '<div style="display:flex;flex-direction:column;gap:10px">' +
+      rows.map(function (kv) { return '<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid rgba(30,42,68,.6);padding-bottom:8px;font-size:12px"><span style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)">' + kv[0] + '</span><span class="num" style="text-align:right;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(kv[1]) + "</span></div>"; }).join("") + "</div>" +
+      '<div style="margin-top:12px;display:grid;grid-template-columns:repeat(5,1fr);gap:6px">' +
+      Object.keys(r.confidence).map(function (k) {
+        var v = r.confidence[k], col = v > 0.9 ? "var(--teal)" : "var(--amber)";
+        return '<div><div style="text-align:center;font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + k + '</div><div class="conf"><i style="background:' + col + '" data-w="' + Math.round(v * 100) + '"></i></div><div class="num" style="margin-top:2px;text-align:center;font-size:9px;color:var(--dim)">' + Math.round(v * 100) + "</div></div>";
+      }).join("") + "</div>" +
+      '<div style="margin-top:16px;display:flex;align-items:center;gap:8px"><span style="color:var(--faint)">' + ico("link", 13) + '</span>' +
+      '<select id="link-dev" class="inp" style="flex:1;height:36px"><option value="">Link to asset \u2014 unassigned</option>' +
+      S.devices.map(function (d) { return '<option value="' + d.id + '"' + (S.linkId === d.id ? " selected" : "") + ">" + esc(d.brand + " " + d.name) + "</option>"; }).join("") + "</select></div>" +
+      '<div style="margin-top:12px;display:flex;gap:8px">' +
+      '<button class="btn btn-teal" style="flex:1;justify-content:center" data-a="commit">COMMIT TO VAULT</button>' +
+      '<button class="btn" data-a="discard">DISCARD</button></div>';
+  }
+  function vaultGridHTML() {
+    var docs = S.docFilter === "all" ? S.docs : S.docs.filter(function (x) { return x.type === S.docFilter; });
+    var devName = function (id) { var f = S.devices.filter(function (d) { return d.id === id; })[0]; return f ? f.name : "Unassigned"; };
+    return '<div class="rv" style="animation-delay:.08s;margin-top:16px">' +
+      '<div class="flexwrap"><span class="tech-label" style="margin-right:4px">VAULT OBJECTS \u00b7 ' + docs.length + "</span>" +
+      chipHTML(S.docFilter === "all", null, "ALL", "dfilter", 'data-t="all"') +
+      DOC_TYPES.map(function (t) { return chipHTML(S.docFilter === t.id, "#6fb3ff", t.label.toUpperCase(), "dfilter", 'data-t="' + t.id + '"'); }).join("") + "</div>" +
+      '<div style="margin-top:12px;display:grid;gap:12px;grid-template-columns:1fr"><style>@media(min-width:640px){#vgrid{grid-template-columns:repeat(2,1fr)!important}}@media(min-width:1280px){#vgrid{grid-template-columns:repeat(3,1fr)!important}}</style><div id="vgrid" style="display:grid;gap:12px;grid-template-columns:1fr">' +
+      docs.map(function (doc, i) {
+        return '<div class="panel panel-live rv" style="display:flex;gap:12px;align-items:flex-start;padding:16px;animation-delay:' + Math.min(i * 0.03, 0.3) + 's">' +
+          '<span style="border:1px solid var(--line);border-radius:6px;background:var(--panel2);padding:10px;color:var(--sky)">' + ico(DOC_IC[doc.type], 16) + "</span>" +
+          '<div style="min-width:0;flex:1"><div style="font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(doc.title) + "</div>" +
+          '<div style="margin-top:2px;font-size:10.5px;color:var(--faint)">' + DOC_LABEL[doc.type] + " \u00b7 " + esc(devName(doc.deviceId)) + "</div>" +
+          '<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px">' +
+          '<span class="chip" style="padding:2px 6px;font-size:9px">' + ico("lock", 9) + " AES-256-GCM</span>" +
+          '<span class="chip" style="padding:2px 6px;font-size:9px">' + (doc.source === "ocr" ? "OCR PARSED" : "MANUAL") + "</span>" +
+          '<span class="chip num" style="padding:2px 6px;font-size:9px">' + doc.sizeKB + " KB \u00b7 " + fmtDate(doc.addedISO) + "</span></div></div></div>";
+      }).join("") + "</div></div></div>";
+  }
+
+  /* --------------------------- alerts ---------------------------- */
+  function viewAlerts() {
+    var al = alerts();
+    var counts = { critical: 0, warning: 0, info: 0 };
+    al.forEach(function (a) { counts[a.severity]++; });
+    var vis = S.sevFilter === "all" ? al : al.filter(function (a) { return a.severity === S.sevFilter; });
+    var events = [
+      { k: "warranty", l: "Warranty expiry", d: "60 / 30 / 7 / 0-day cadence before coverage lapses", i: "shield", c: "#ffb224" },
+      { k: "service", l: "Service schedule", d: "Calendar intervals + runtime-hour triggers", i: "wrench", c: "#6fb3ff" },
+      { k: "health", l: "Health index drop", d: "Fires when AHI crosses below 55 / 40", i: "bolt", c: "#2fe0be" }
+    ];
+    var html = '<div style="display:grid;gap:16px;grid-template-columns:1fr"><style>@media(min-width:1024px){#alert-grid{grid-template-columns:400px 1fr!important}}</style><div id="alert-grid" style="display:grid;gap:16px;grid-template-columns:1fr">' +
+      '<div class="panel rv" style="align-self:start;padding:20px"><style>@media(min-width:1024px){#rules-card{position:sticky;top:72px}}</style><div id="rules-card">' +
+      '<span class="tech-label">Notification Rule Matrix</span>' +
+      '<p style="margin:8px 0 0;font-size:11px;line-height:1.6;color:var(--faint)">Multi-channel fan-out hydrated nightly into Redis ZSETs (<span class="num" style="color:var(--dim)">score = eventTs \u2212 leadDays</span>) and dispatched by the scheduler worker.</p>' +
+      '<div style="margin-top:20px"><div style="margin-bottom:8px;font-size:9.5px;letter-spacing:.18em;color:var(--faint)">WARRANTY LEAD-TIME CADENCE (DAYS)</div><div style="display:flex;gap:8px">' +
+      [60, 30, 7, 0].map(function (t) {
+        var on = S.rules.thresholds.indexOf(t) >= 0;
+        return '<button class="num" data-a="tth" data-t="' + t + '" style="flex:1;border-radius:6px;border:1px solid ' + (on ? "rgba(255,178,36,.53)" : "var(--line)") + ";background:" + (on ? "rgba(255,178,36,.08)" : "transparent") + ";color:" + (on ? "var(--amber)" : "var(--faint)") + ';padding:8px 0;font-size:13px;font-weight:600;transition:all .2s">' + (t === 0 ? "D0" : "D-" + t) + "</button>";
+      }).join("") + "</div></div>" +
+      '<div style="margin-top:20px;border:1px solid var(--line);border-radius:6px;overflow:hidden">' +
+      '<div style="display:grid;grid-template-columns:1fr repeat(4,44px);align-items:center;background:rgba(20,29,49,.7);padding:8px 12px">' +
+      '<span style="font-size:9px;letter-spacing:.18em;color:var(--faint)">EVENT \\ CHANNEL</span>' +
+      CHANNELS.map(function (c) { return '<span style="justify-self:center;color:var(--dim)" title="' + CH_META[c].l + '">' + ico(CH_META[c].i, 13) + "</span>"; }).join("") + "</div>" +
+      events.map(function (ev) {
+        return '<div style="display:grid;grid-template-columns:1fr repeat(4,44px);align-items:center;border-top:1px solid rgba(30,42,68,.7);padding:12px">' +
+          '<div style="padding-right:8px"><div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ink)"><span style="color:' + ev.c + '">' + ico(ev.i, 12) + "</span> " + ev.l + "</div>" +
+          '<div style="margin-top:2px;font-size:9.5px;line-height:1.4;color:var(--faint)">' + ev.d + "</div></div>" +
+          CHANNELS.map(function (c) {
+            var on = S.rules.channels[ev.k].indexOf(c) >= 0;
+            return '<span style="justify-self:center"><button class="tgl' + (on ? " on" : "") + '" data-a="tch" data-k="' + ev.k + '" data-c="' + c + '" aria-label="' + ev.l + " via " + c + '" style="' + (on ? "background:" + ev.c + "26;border-color:" + ev.c + "88" : "") + '"><span class="knob" style="' + (on ? "background:" + ev.c : "") + '"></span></button></span>';
+          }).join("") + "</div>";
+      }).join("") + "</div>" +
+      '<div style="margin-top:16px;border:1px solid var(--line);border-radius:6px;background:rgba(20,29,49,.4);padding:12px">' +
+      '<div style="font-size:9.5px;letter-spacing:.18em;color:var(--faint)">SCHEDULER PREVIEW</div>' +
+      '<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">' +
+      al.slice(0, 4).map(function (a) {
+        return '<div style="display:flex;align-items:center;gap:8px;font-size:10.5px"><span style="width:4px;height:4px;border-radius:99px;background:' + SEV[a.severity].color + ';flex:none"></span>' +
+          '<span style="min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dim)">' + esc(a.deviceName) + " \u2014 " + esc(a.title) + "</span>" +
+          '<span style="display:flex;gap:4px">' + a.channels.map(function (c) { return '<span style="color:var(--faint)">' + ico(CH_META[c].i, 10) + "</span>"; }).join("") + "</span></div>";
+      }).join("") +
+      (al.length === 0 ? '<div style="font-size:10.5px;color:var(--faint)">Queue empty \u2014 nothing scheduled.</div>' : "") +
+      "</div></div></div></div>";
+
+    html += '<div class="panel rv" style="padding:20px;animation-delay:.06s">' +
+      '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:center"><span class="tech-label">Live Alert Feed</span>' +
+      '<div class="flexwrap" style="gap:8px">' +
+      chipHTML(S.sevFilter === "all", null, "ALL \u00b7 " + al.length, "sfilter", 'data-s="all"') +
+      ["critical", "warning", "info"].map(function (s) { return chipHTML(S.sevFilter === s, SEV[s].color, SEV[s].label + " \u00b7 " + counts[s], "sfilter", 'data-s="' + s + '"'); }).join("") +
+      "</div></div>" +
+      '<div style="margin-top:16px;display:flex;flex-direction:column;gap:8px">' +
+      vis.map(function (a) {
+        var sv = SEV[a.severity];
+        return '<div style="display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-left:3px solid ' + sv.color + ';border-radius:6px;background:rgba(20,29,49,.4);padding:14px">' +
+          '<div style="min-width:0;flex:1"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">' +
+          '<span style="font-size:13px;font-weight:600;color:var(--ink)">' + esc(a.title) + "</span>" +
+          '<span class="chip" style="padding:2px 6px;font-size:9px;font-weight:700;color:' + sv.color + ";border-color:" + sv.color + '55">' + sv.label + "</span>" +
+          '<span class="chip" style="padding:2px 6px;font-size:9px">' + a.kind.toUpperCase() + "</span></div>" +
+          '<div style="margin-top:4px;font-size:11.5px;color:var(--dim)">' + esc(a.deviceName) + " \u2014 " + esc(a.detail) + "</div>" +
+          '<div style="margin-top:8px;display:flex;align-items:center;gap:8px"><span style="font-size:9px;letter-spacing:.16em;color:var(--faint)">FAN-OUT:</span>' +
+          a.channels.map(function (c) { return '<span class="chip" style="padding:2px 6px;font-size:9px">' + ico(CH_META[c].i, 9) + " " + CH_META[c].l.toUpperCase() + "</span>"; }).join("") + "</div></div>" +
+          '<button class="btn" style="flex:none" data-a="ack" data-id="' + a.id + '">' + ico("check", 12) + " ACK</button></div>";
+      }).join("") +
+      (vis.length === 0 ? '<div style="border:1px dashed var(--line);border-radius:6px;padding:40px 12px;text-align:center"><div style="font-size:13px;font-weight:600;color:var(--dim)">Feed clear</div><div style="margin-top:4px;font-size:11.5px;color:var(--faint)">' + (Object.keys(S.acked).length ? Object.keys(S.acked).length + " alert(s) acknowledged this session." : "No alerts match this filter.") + "</div></div>" : "") +
+      "</div></div></div>";
+    return html;
+  }
+
+  /* -------------------------- blueprint -------------------------- */
+  var KW_TS = "import|export|from|const|let|async|await|function|return|if|else|for|of|in|new|type|interface|extends|class|default|switch|case|break|continue|try|catch|throw|typeof|keyof|readonly|as|void|null|undefined|true|false|this";
+  var KW_PR = "model|enum|generator|datasource|provider|url|env|relation|fields|references|onDelete|default|unique|index|map|updatedAt|now|true|false";
+  function highlight(code, lang) {
+    var kw = lang === "ts" ? KW_TS : KW_PR;
+    var re = new RegExp("(\\/\\/[^\\n]*)|(\\/\\*[\\s\\S]*?\\*\\/)|(\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*'|`(?:[^`\\\\]|\\\\.)*`)|(@{1,2}[A-Za-z_][\\w.]*)|(\\b(?:" + kw + ")\\b)|(\\b\\d[\\d_.]*\\b)|(\\b[A-Z][A-Za-z0-9_]*\\b)", "g");
+    var out = "", last = 0, m;
+    while ((m = re.exec(code))) {
+      if (m.index > last) out += esc(code.slice(last, m.index));
+      var cls = m[1] || m[2] ? "tok-com" : m[3] ? "tok-str" : m[4] || m[5] ? "tok-kw" : m[6] ? "tok-num" : "tok-type";
+      out += '<span class="' + cls + '">' + esc(m[0]) + "</span>";
+      last = m.index + m[0].length;
+    }
+    if (last < code.length) out += esc(code.slice(last));
+    return out.split("\n").map(function (ln) { return '<div class="ln"><span class="no"></span><span class="tx">' + (ln || " ") + "</span></div>"; }).join("");
+  }
+  function flowBox(x, y, w, label, sub, color) {
+    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="46" rx="6" fill="#141d31" stroke="' + color + '" stroke-opacity=".55"/>' +
+      '<text x="' + (x + w / 2) + '" y="' + (y + 19) + '" text-anchor="middle" fill="#e9effa" font-size="11" font-family="Chakra Petch,sans-serif" font-weight="600">' + label + "</text>" +
+      '<text x="' + (x + w / 2) + '" y="' + (y + 34) + '" text-anchor="middle" fill="#8b99b6" font-size="8.5" font-family="IBM Plex Mono,monospace">' + sub + "</text>";
+  }
+  function flow(x1, y1, x2, y2) {
+    var mid = (y1 + y2) / 2;
+    return '<path d="M' + x1 + "," + y1 + " C" + x1 + "," + mid + " " + x2 + "," + mid + " " + x2 + "," + y2 + '" fill="none" stroke="#2c3d63" stroke-width="1.4" stroke-dasharray="5 4" class="dash-flow"/>';
+  }
+  function viewBlueprint() {
+    var tabs = [
+      { id: "schema", file: "apps/api/prisma/schema.prisma", lang: "prisma", src: "src-schema" },
+      { id: "parser", file: "apps/api/functions/ocr-parser.ts", lang: "ts", src: "src-parser" },
+      { id: "engine", file: "apps/core/src/lifecycle/healthEngine.ts", lang: "ts", src: "src-engine" }
+    ];
+    var act = tabs.filter(function (t) { return t.id === S.bpTab; })[0];
+    var code = document.getElementById(act.src).textContent.replace(/^\n/, "");
+    var STACK = ["Next.js 15 \u00b7 App Router", "React 19", "Tailwind CSS v4", "Framer Motion", "Lucide", "Prisma ORM \u00b7 PostgreSQL 16", "Redis 7 \u00b7 ZSET scheduler", "OpenAI Vision gpt-4o", "S3 / GCS + KMS envelope encryption", "Expo \u00b7 SQLite offline sync", "TypeScript strict monorepo"];
+    var MODULES = [
+      { i: "scan", c: "#2fe0be", t: "OCR Document Vault", d: "Camera/PDF intake \u2192 vision-LLM structured extraction \u2192 per-field confidence \u2192 KMS-encrypted S3 storage with client-side access control." },
+      { i: "cpu", c: "#a8e05f", t: "Category-Aware Lifecycle Engine", d: "Portable: charge cycles + SOH. HVAC: run-hours + compressor cycles. IT: uptime + kWh. Industrial: vibration, oil/coolant cadence, power factor." },
+      { i: "bell", c: "#ffb224", t: "Predictive Alerting Matrix", d: "Configurable 60/30/7/0-day warranty cadence across push, email, WhatsApp and calendar sync \u2014 scheduled on Redis sorted sets." },
+      { i: "phone", c: "#6fb3ff", t: "Offline-First Mobile", d: "Expo client captures receipts and meter readings offline; SQLite outbox replays with tombstone-aware merge on reconnect." }
+    ];
+    var NOTES = [
+      ["01", "Partition UsageTelemetry monthly with pg_partman (or TimescaleDB hypertables) \u2014 retention 24 months hot, then columnar cold storage."],
+      ["02", "Row-level security per tenant_id on every table; Prisma middleware injects the tenant scope from the JWT."],
+      ["03", "Vault objects encrypted client-side with AES-256-GCM; DEKs wrapped by KMS \u2014 the API never sees plaintext."],
+      ["04", "OCR results cached by sha256 of the upload; p95 parse budget 4 s, with a Tesseract.js fallback worker for on-prem installs."],
+      ["05", "Nightly cron hydrates Redis ZSETs (warranty / service / health) from Postgres; scheduler worker fans out to push, SMTP, WhatsApp Business and ICS."],
+      ["06", "Claim PDFs built idempotently in a worker (pdfkit) keyed by claim reference; status machine draft \u2192 submitted \u2192 settled."],
+      ["07", "Expo client syncs via an outbox queue with tombstones \u2014 full offline-first capture of receipts and meter readings."]
+    ];
+
+    var html = '<div class="panel rv" style="padding:20px">' +
+      '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center"><span class="tech-label" style="display:inline-flex;align-items:center;gap:8px"><span style="display:inline-block;width:5px;height:5px;transform:rotate(45deg);background:var(--amber)"></span> SYSTEM DATAFLOW</span>' +
+      '<span class="num" style="font-size:10px;color:var(--faint)">monorepo \u00b7 apps/{web, api, mobile} \u00b7 packages/core</span></div>' +
+      '<div style="margin-top:16px;overflow-x:auto"><svg viewBox="0 0 780 300" style="display:block;margin:0 auto;width:100%;max-width:780px">' +
+      flowBox(20, 30, 170, "Web \u00b7 Next.js 15", "App Router + RSC", "#6fb3ff") +
+      flowBox(20, 110, 170, "Mobile \u00b7 Expo", "SQLite offline outbox", "#6fb3ff") +
+      flowBox(290, 70, 190, "API Gateway", "route handlers \u00b7 tRPC", "#a8e05f") +
+      flowBox(560, 8, 200, "OCR Parser \u03bb", "gpt-4o vision + zod", "#2fe0be") +
+      flowBox(560, 78, 200, "Lifecycle Engine", "healthEngine.ts \u00b7 pure TS", "#ffb224") +
+      flowBox(560, 148, 200, "PostgreSQL 16", "Prisma \u00b7 JSONB specs", "#a8e05f") +
+      flowBox(290, 208, 190, "Redis 7", "ZSET notification queues", "#ff6259") +
+      flowBox(560, 238, 200, "Notifier", "push \u00b7 mail \u00b7 WA \u00b7 ICS", "#ff6259") +
+      flowBox(20, 208, 170, "S3 / GCS Vault", "KMS envelope enc.", "#2fe0be") +
+      flow(190, 53, 290, 85) + flow(190, 133, 290, 100) + flow(480, 82, 560, 31) + flow(480, 93, 560, 98) + flow(660, 54, 660, 148) +
+      flow(480, 104, 560, 165) + flow(660, 124, 660, 148) + flow(385, 116, 385, 208) + flow(480, 231, 560, 255) + flow(190, 231, 290, 231) + flow(640, 194, 480, 225) +
+      "</svg></div>" +
+      '<div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:8px">' + STACK.map(function (s) { return '<span class="chip">' + s + "</span>"; }).join("") + "</div></div>";
+
+    html += '<div class="panel rv" style="padding:20px;margin-top:16px;animation-delay:.06s">' +
+      '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px"><span class="tech-label" style="margin-right:8px">SOURCE ARTIFACTS</span>' +
+      tabs.map(function (t) {
+        var on = t.id === S.bpTab;
+        return '<button data-a="bptab" data-t="' + t.id + '" style="position:relative;border-radius:6px;padding:8px 12px;font-size:11px;font-weight:600;color:' + (on ? "var(--amber)" : "var(--dim)") + '">' +
+          (on ? '<span class="pill" style="position:absolute;inset:0;border-radius:6px;border:1px solid rgba(255,178,36,.4);background:rgba(255,178,36,.1);animation:pop .24s"></span>' : "") +
+          '<span class="num" style="position:relative">' + t.file.split("/").pop() + "</span></button>";
+      }).join("") +
+      '<button class="btn" style="margin-left:auto" data-a="copycode">' + ico("copy", 12) + " COPY</button></div>" +
+      '<div class="num" style="margin-top:8px;font-size:10px;color:var(--faint)">' + act.file + " \u00b7 " + code.split("\n").length + ' lines</div>' +
+      '<div class="code" id="code-pane" style="margin-top:12px">' + highlight(code, act.lang) + "</div></div>";
+
+    html += '<div style="margin-top:16px;display:grid;gap:16px;grid-template-columns:1fr"><style>@media(min-width:1024px){#bp-grid{grid-template-columns:1fr 1fr!important}}</style><div id="bp-grid" style="display:grid;gap:16px;grid-template-columns:1fr">' +
+      '<div class="panel rv" style="padding:20px;animation-delay:.08s"><span class="tech-label">Core Modules</span><div style="margin-top:16px;display:flex;flex-direction:column;gap:12px">' +
+      MODULES.map(function (m) {
+        return '<div style="display:flex;gap:12px;border:1px solid var(--line);border-radius:6px;background:rgba(20,29,49,.4);padding:14px;transition:border-color .2s">' +
+          '<span style="color:' + m.c + ';flex:none;margin-top:2px">' + ico(m.i, 17) + "</span><div>" +
+          '<div style="font-family:var(--fd);font-size:13px;font-weight:600;color:var(--ink)">' + m.t + "</div>" +
+          '<div style="margin-top:4px;font-size:11px;line-height:1.6;color:var(--dim)">' + m.d + "</div></div></div>";
+      }).join("") + "</div></div>" +
+      '<div class="panel rv" style="padding:20px;animation-delay:.1s"><span class="tech-label" style="display:inline-flex;align-items:center;gap:8px">' + ico("db", 12) + " Deployment & Ops Notes</span>" +
+      '<div style="margin-top:16px;display:flex;flex-direction:column;gap:10px">' +
+      NOTES.map(function (n) { return '<div style="display:flex;gap:12px;border:1px solid var(--line);border-radius:6px;background:rgba(20,29,49,.4);padding:10px 14px"><span class="num" style="font-size:11px;font-weight:600;color:var(--amber)">' + n[0] + '</span><p style="margin:0;font-size:11px;line-height:1.6;color:var(--dim)">' + n[1] + "</p></div>"; }).join("") +
+      '<div style="display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:6px;background:rgba(20,29,49,.4);padding:10px 14px;margin-top:6px"><span style="color:var(--sky)">' + ico("cloud", 14) + '</span><p style="margin:0;font-size:11px;color:var(--dim)">Reference topology: Fly.io/EC2 API tier, RDS Postgres multi-AZ, ElastiCache Redis, S3 vault with bucket policies \u2014 all infra as code in <span class="num" style="color:var(--ink)">infra/pulumi</span>.</p></div>' +
+      "</div></div></div>";
+    return html;
+  }
+
+  /* ---------------------------- shell ---------------------------- */
+  var NAV = [
+    { id: "overview", label: "Command", i: "grid" },
+    { id: "assets", label: "Assets", i: "boxes" },
+    { id: "vault", label: "Vault \u00b7 OCR", i: "scan" },
+    { id: "alerts", label: "Alerts", i: "bell" },
+    { id: "blueprint", label: "Blueprint", i: "braces" }
+  ];
+  var TITLES = { overview: "Fleet Command", assets: "Asset Registry", vault: "Document Vault \u00b7 OCR Parser", alerts: "Predictive Alerting Matrix", blueprint: "Systems Blueprint" };
+
+  function shell() {
+    var al = alerts().length;
+    var railItems = NAV.map(function (n) {
+      var on = S.view === n.id;
+      return '<button class="rail-item' + (on ? " on" : "") + '" data-a="nav" data-v="' + n.id + '">' + (on ? '<span class="pill"></span>' : "") +
+        '<span style="position:relative">' + ico(n.i, on ? 17 : 16) + (n.id === "alerts" && al > 0 ? '<span class="badge">' + al + "</span>" : "") + "</span>" +
+        '<span class="lbl">' + n.label + "</span></button>";
+    }).join("");
+
+    var view = S.view === "overview" ? viewOverview() : S.view === "assets" ? viewAssets() : S.view === "vault" ? viewVault() : S.view === "alerts" ? viewAlerts() : viewBlueprint();
+
+    return '<header class="topbar"><div style="display:flex;align-items:center;gap:10px"><span style="display:inline-flex">' + bolt.replace("<svg ", '<svg width="30" height="30" ') + "</span>" +
+      '<div style="line-height:1"><div style="font-family:var(--fd);font-size:15px;font-weight:700;letter-spacing:.12em;color:var(--ink)">ELECTRO<span style="color:var(--amber)">CARE</span></div>' +
+      '<div style="margin-top:2px;font-size:8.5px;font-weight:500;letter-spacing:.3em;color:var(--faint)">ASSET LIFECYCLE OS</div></div></div>' +
+      '<div style="width:1px;height:24px;background:var(--line);display:none" class="sep"></div><style>@media(min-width:640px){.sep{display:block!important}}</style>' +
+      '<span class="tech-label sep" style="display:none">' + TITLES[S.view] + "</span>" +
+      '<div style="margin-left:auto;display:flex;align-items:center;gap:12px">' +
+      '<div style="position:relative;display:none" class="searchbox"><style>@media(min-width:768px){.searchbox{display:block!important}}</style>' +
+      '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--faint);pointer-events:none">' + ico("search", 13) + "</span>" +
+      '<input id="q" class="inp" style="width:230px;padding-left:32px" placeholder="Search serial, brand, asset\u2026" value="' + esc(S.query) + '"></div>' +
+      '<div class="num sep" style="display:none;font-size:12px;color:var(--dim)" id="clock">--:--:-- UTC</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;border-radius:6px;border:1px solid ' + (al > 3 ? "rgba(255,98,89,.5)" : "rgba(47,224,190,.4)") + ";background:" + (al > 3 ? "rgba(255,98,89,.1)" : "rgba(47,224,190,.1)") + ";padding:6px 10px;font-size:10px;font-weight:600;letter-spacing:.14em;color:" + (al > 3 ? "var(--coral)" : "var(--teal)") + '">' +
+      '<span class="' + (al > 3 ? "pulse-dot-red" : "pulse-dot") + '" style="width:6px;height:6px;border-radius:99px;background:' + (al > 3 ? "var(--coral)" : "var(--teal)") + '"></span>' +
+      (al > 3 ? "ATTENTION" : "NOMINAL") + "</div></div></header>" +
+      '<aside class="rail"><nav style="display:flex;flex-direction:column;gap:4px">' + railItems + "</nav>" +
+      '<div style="margin-top:auto;display:flex;flex-direction:column;gap:8px"><div style="border:1px solid var(--line);border-radius:6px;background:var(--panel2);padding:8px;text-align:center">' +
+      '<div class="num" style="font-size:9.5px;color:var(--faint)">core v2.4.1 \u00b7 8f3ca2</div>' +
+      '<div style="margin-top:4px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:9px;letter-spacing:.1em;color:var(--teal)"><span class="pulse-dot" style="width:4px;height:4px;border-radius:99px;background:var(--teal)"></span> OFFLINE-READY</div></div></div></aside>' +
+      '<nav class="mobnav">' + railItems + "</nav>" +
+      '<main><div class="wrap">' + view +
+      '<footer style="margin-top:32px;padding:16px 0 24px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px">' +
+      '<span class="num" style="font-size:10px;color:var(--faint)">ElectroCare OS \u00b7 core v2.4.1 \u00b7 demo telemetry seeded from live models</span>' +
+      '<span class="num" style="font-size:10px;color:var(--faint)">schema 11 models \u00b7 parser \u03bb p95 3.8 s \u00b7 scheduler queue ' + al + " pending</span></footer>" +
+      "</div></main>";
+  }
+
+  /* ------------------------- render loop ------------------------- */
+  var root = document.getElementById("root");
+  function afterRender() {
+    $$(".ring-arc").forEach(function (el) {
+      requestAnimationFrame(function () { requestAnimationFrame(function () { el.setAttribute("stroke-dashoffset", el.getAttribute("data-c")); }); });
+    });
+    $$("[data-count]").forEach(function (el) {
+      var target = parseFloat(el.getAttribute("data-count")), t0 = performance.now();
+      var step = function (t) {
+        var p = Math.min(1, (t - t0) / 900), e = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(target * e).toLocaleString("en-US");
+        if (p < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+    var q = $("#q");
+    if (q) { q.addEventListener("input", onQuery); if (document.activeElement !== q && S.query) q.value = S.query; }
+    if (S.view === "vault" && S.scan && S.scan.phase === 4) {
+      $$(".conf i").forEach(function (el) { requestAnimationFrame(function () { requestAnimationFrame(function () { el.style.width = el.getAttribute("data-w") + "%"; }); }); });
+    }
+    $$(".code .ln").forEach(function (ln, i) { var no = ln.querySelector(".no"); if (no) no.textContent = i + 1; });
+  }
+  function render() { root.innerHTML = shell(); afterRender(); }
+
+  function onQuery(e) {
+    S.query = e.target.value;
+    if (S.query && S.view !== "assets") { S.view = "assets"; render(); var q2 = $("#q"); if (q2) { q2.focus(); q2.setSelectionRange(q2.value.length, q2.value.length); } }
+    else { var rl = $("#reg-list"); if (rl) { var tmp = document.createElement("div"); tmp.innerHTML = viewAssets(); var nl = tmp.querySelector("#reg-list"); if (nl) rl.innerHTML = nl.innerHTML; var cnt = $(".tech-label", rl.parentElement); } }
+  }
+
+  /* --------------------------- events ---------------------------- */
+  var scanTimers = [];
+  function clearScanTimers() { scanTimers.forEach(clearTimeout); scanTimers = []; }
+
+  function startScan(filename, sizeKB, receipt) {
+    clearScanTimers();
+    var rnd = mulberry32(sizeKB * 7 + filename.length);
+    var hash = ""; for (var i = 0; i < 12; i++) hash += "0123456789abcdef"[Math.floor(rnd() * 16)];
+    var stamp = function () { return new Date().toLocaleTimeString("en-GB", { hour12: false }); };
+    S.scan = { phase: 0, lines: [], result: null, filename: filename, sizeKB: sizeKB, receipt: receipt };
+    var push = function (msg) { S.scan.lines.push(stamp() + " " + msg); var c = $("#scan-console"); if (c) c.innerHTML = consoleHTML(); };
+    var refreshPhases = function () { var p = $("#phases"); if (p) { var tmp = document.createElement("div"); tmp.innerHTML = viewVault(); var np = tmp.querySelector("#phases"); if (np) p.innerHTML = np.innerHTML; } };
+    var sched = function (fn, ms) { scanTimers.push(setTimeout(fn, ms)); };
+
+    render();
+    push("ingest: " + filename + " \u00b7 " + sizeKB + " KB \u00b7 sha256 " + hash + "\u2026");
+    sched(function () { push("ingest: MIME ok \u00b7 orientation corrected \u00b7 DPI 300"); }, 420);
+    sched(function () { S.scan.phase = 1; refreshPhases(); push("ocr: dispatching to vision endpoint\u2026"); }, 700);
+    sched(function () { push("ocr: 14 text blocks \u00b7 2 barcode regions \u00b7 skew 0.4\u00b0"); }, 1350);
+    sched(function () { push('ocr: merchant line \u2192 "' + receipt.merchant + '" (p=0.98)'); }, 1750);
+    sched(function () { S.scan.phase = 2; refreshPhases(); push("extract: JSON schema enforced \u00b7 temperature 0"); }, 2250);
+    sched(function () { push("extract: serial " + receipt.serial + " \u00b7 " + (receipt.warrantyMonths / 12).toFixed(1) + "y standard" + (receipt.extendedMonths ? " +" + receipt.extendedMonths + "mo ext" : "")); }, 2750);
+    sched(function () { S.scan.phase = 3; refreshPhases(); push("validate: checksum PASS \u00b7 dates normalized to ISO-8601"); }, 3200);
+    sched(function () {
+      var today = new Date(); today.setHours(12, 0, 0, 0);
+      S.scan.phase = 4;
+      var r = {};
+      Object.keys(receipt).forEach(function (k) { r[k] = receipt[k]; });
+      r.purchaseISO = today.toISOString();
+      S.scan.result = r;
+      var match = S.devices.filter(function (d) { return d.brand.toLowerCase() === receipt.brand.toLowerCase(); })[0];
+      S.linkId = match ? match.id : "";
+      push("validate: ExtractedReceipt ready \u2014 awaiting operator commit");
+      var rs = $("#scan-result"); if (rs) rs.innerHTML = resultHTML();
+      refreshPhases();
+      $$(".conf i").forEach(function (el) { requestAnimationFrame(function () { requestAnimationFrame(function () { el.style.width = el.getAttribute("data-w") + "%"; }); }); });
+      var topBtn = $('[data-a="abort-scan"]'); if (topBtn) topBtn.remove();
+    }, 3750);
+  }
+
+  function completeSchedule(dev, label) {
+    dev.schedules.forEach(function (s) {
+      if (s.label === label) {
+        if (s.kind === "time") s.lastDoneISO = new Date().toISOString();
+        else s.lastDoneHours = dev.meta.runtimeHours || 0;
+      }
+    });
+  }
+
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest ? e.target.closest("[data-a]") : null;
+    if (!t) { if (S.claim && e.target.classList && e.target.classList.contains("scrim")) { S.claim = null; render(); } return; }
+    var a = t.getAttribute("data-a");
+    var dev = function (id) { return S.devices.filter(function (d) { return d.id === id; })[0]; };
+
+    if (a === "nav") { S.view = t.getAttribute("data-v"); S.logOpen = null; render(); window.scrollTo(0, 0); }
+    else if (a === "cat") { S.category = t.getAttribute("data-c"); S.pulseIdx = 0; pulseBuf.devId = null; render(); }
+    else if (a === "open") { S.sel = t.getAttribute("data-id"); S.view = "assets"; S.logOpen = null; render(); window.scrollTo(0, 0); }
+    else if (a === "sel") { S.sel = t.getAttribute("data-id"); S.logOpen = null; render(); }
+    else if (a === "ack") { S.acked[t.getAttribute("data-id")] = 1; toast("Alert acknowledged", "info"); render(); }
+    else if (a === "done") {
+      var d = dev(t.getAttribute("data-id")), label = t.getAttribute("data-label");
+      var before = computeHealth(d, logsBy()[d.id] || [], NOW).score;
+      S.logs.push({ id: "log-" + Date.now(), deviceId: d.id, dateISO: new Date().toISOString(), provider: "Self", action: label + " \u2014 completed", cost: 0 });
+      completeSchedule(d, label);
+      var after = computeHealth(d, logsBy()[d.id] || [], NOW).score;
+      var delta = after - before;
+      toast(label + " logged \u00b7 health " + before + " \u2192 " + after + (delta >= 0 ? " (+" + delta + ")" : ""), "ok");
+      render();
+    }
+    else if (a === "logopen") { S.logOpen = t.getAttribute("data-rule"); render(); var p = $("#log-provider"); if (p) p.focus(); }
+    else if (a === "logsubmit") {
+      var d2 = dev(t.getAttribute("data-id")), lbl = t.getAttribute("data-label");
+      var provider = ($("#log-provider") || {}).value || "Self";
+      var cost = parseFloat(($("#log-cost") || {}).value) || 0;
+      var b2 = computeHealth(d2, logsBy()[d2.id] || [], NOW).score;
+      S.logs.push({ id: "log-" + Date.now(), deviceId: d2.id, dateISO: new Date().toISOString(), provider: provider.trim() || "Self", action: lbl + " \u2014 logged", cost: cost });
+      var a2 = computeHealth(d2, logsBy()[d2.id] || [], NOW).score;
+      S.logOpen = null;
+      toast("Ledger updated \u00b7 health " + b2 + " \u2192 " + a2 + (a2 - b2 >= 0 ? " (+" + (a2 - b2) + ")" : ""), "ok");
+      render();
+    }
+    else if (a === "claim") { S.claim = dev(t.getAttribute("data-id")); render(); }
+    else if (a === "x-claim-bg") { S.claim = null; render(); }
+    else if (a === "dl-claim") {
+      var dc = dev(t.getAttribute("data-id"));
+      var issueEl = $("#claim-issue");
+      var dlogs = logsBy()[dc.id] || [];
+      var w = warrantyInfo(dc, NOW), h = computeHealth(dc, dlogs, NOW);
+      var titles = S.docs.filter(function (x) { return x.deviceId === dc.id; }).map(function (x) { return DOC_LABEL[x.type] + " \u2014 " + x.title; });
+      if (!titles.length) titles = ["No vault documents attached"];
+      downloadFile("ElectroCare-Claim-" + dc.serial + ".html", buildClaimHTML(dc, issueEl ? issueEl.value : "", titles, dlogs, w, h.score));
+      toast("Claim packet downloaded \u2014 ready for OEM submission", "ok");
+    }
+    else if (a === "copy-claim") {
+      var dc2 = dev(t.getAttribute("data-id"));
+      var issueEl2 = $("#claim-issue");
+      var w2 = warrantyInfo(dc2, NOW);
+      var payload = JSON.stringify({ ref: "EC-" + dc2.serial.slice(-6).toUpperCase(), asset: dc2.name, serial: dc2.serial, issue: issueEl2 ? issueEl2.value : "", coverage: w2 }, null, 2);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(payload).then(function () { toast("Claim JSON copied to clipboard", "info"); }, function () { toast("Clipboard unavailable in this browser", "warn"); });
+      } else toast("Clipboard unavailable in this browser", "warn");
+    }
+    else if (a === "scan") {
+      var smp = SAMPLES.filter(function (s) { return s.id === t.getAttribute("data-file"); })[0];
+      startScan(smp.filename, smp.sizeKB, smp.receipt);
+    }
+    else if (a === "abort-scan") { clearScanTimers(); S.scan = null; render(); }
+    else if (a === "discard") { clearScanTimers(); S.scan = null; render(); }
+    else if (a === "commit") {
+      if (S.scan && S.scan.result) {
+        var r = S.scan.result;
+        S.docs.unshift({ id: "doc-" + Date.now(), deviceId: S.linkId || null, type: r.docType, title: r.merchant.split("\u00b7")[0].trim() + " \u2014 " + r.model, sizeKB: S.scan.sizeKB, addedISO: new Date().toISOString(), source: "ocr" });
+        toast("Parsed " + r.docType.replace("-", " ") + " committed to vault", "ok");
+        S.scan = null; render();
+      }
+    }
+    else if (a === "dfilter") { var ft = t.getAttribute("data-t"); S.docFilter = S.docFilter === ft ? "all" : ft; render(); }
+    else if (a === "sfilter") { var sv = t.getAttribute("data-s"); S.sevFilter = S.sevFilter === sv ? "all" : sv; render(); }
+    else if (a === "tth") {
+      var th = parseInt(t.getAttribute("data-t"), 10);
+      var idx = S.rules.thresholds.indexOf(th);
+      if (idx >= 0) S.rules.thresholds.splice(idx, 1); else S.rules.thresholds.push(th);
+      S.rules.thresholds.sort(function (x, y) { return y - x; });
+      render();
+    }
+    else if (a === "tch") {
+      var kind = t.getAttribute("data-k"), chn = t.getAttribute("data-c");
+      var arr = S.rules.channels[kind];
+      var ci = arr.indexOf(chn);
+      if (ci >= 0) arr.splice(ci, 1); else arr.push(chn);
+      render();
+    }
+    else if (a === "bptab") { S.bpTab = t.getAttribute("data-t"); render(); }
+    else if (a === "copycode") {
+      var src = S.bpTab === "schema" ? "src-schema" : S.bpTab === "parser" ? "src-parser" : "src-engine";
+      var txt = document.getElementById(src).textContent.replace(/^\n/, "");
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt).then(function () { toast("Source artifact copied \u2014 " + txt.split("\n").length + " lines", "info"); }, function () { toast("Clipboard unavailable", "warn"); });
+      } else toast("Clipboard unavailable", "warn");
+    }
+  });
+
+  document.addEventListener("change", function (e) {
+    if (e.target && e.target.id === "file-in") {
+      var f = e.target.files && e.target.files[0];
+      if (f) startScan(f.name, Math.max(64, Math.round(f.size / 1024)), SAMPLES[Math.floor(Math.random() * SAMPLES.length)].receipt);
+      e.target.value = "";
+    }
+    if (e.target && e.target.id === "link-dev") { S.linkId = e.target.value; }
+  });
+
+  document.addEventListener("dragover", function (e) {
+    var dz = e.target.closest ? e.target.closest("#dropzone") : null;
+    if (dz) { e.preventDefault(); dz.classList.add("over"); }
+  });
+  document.addEventListener("dragleave", function (e) {
+    var dz = e.target.closest ? e.target.closest("#dropzone") : null;
+    if (dz) dz.classList.remove("over");
+  });
+  document.addEventListener("drop", function (e) {
+    var dz = e.target.closest ? e.target.closest("#dropzone") : null;
+    if (dz) {
+      e.preventDefault(); dz.classList.remove("over");
+      var f = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) startScan(f.name, Math.max(64, Math.round(f.size / 1024)), SAMPLES[Math.floor(Math.random() * SAMPLES.length)].receipt);
+    }
+  });
+
+  /* ------------------------ live subsystems ---------------------- */
+  setInterval(function () {
+    var c = $("#clock");
+    if (c) c.textContent = new Date().toLocaleTimeString("en-GB", { hour12: false }) + " UTC";
+  }, 1000);
+
+  setInterval(function () {
+    if (S.view !== "overview") return;
+    var list = filteredDevices();
+    var dev = list.length ? list[S.pulseIdx % list.length] : null;
+    if (!dev) return;
+    var jit = function (arr, amt) {
+      if (!arr.length) return arr;
+      return arr.slice(1).concat([Math.max(0, arr[arr.length - 1] + (Math.random() - 0.5) * amt)]);
+    };
+    if (dev.telemetry[0]) {
+      var range0 = Math.max.apply(null, dev.telemetry[0].points) - Math.min.apply(null, dev.telemetry[0].points);
+      pulseBuf.a = jit(pulseBuf.a, range0 * 0.25 || 1);
+      var sp0 = $("#tp-spark-0"), vl0 = $("#tp-val-0");
+      if (sp0) sp0.innerHTML = spark(pulseBuf.a, CAT[dev.category].color, 44);
+      if (vl0) vl0.textContent = pulseBuf.a[pulseBuf.a.length - 1].toFixed(dev.telemetry[0].decimals == null ? 1 : dev.telemetry[0].decimals);
+    }
+    if (dev.telemetry[1]) {
+      var range1 = Math.max.apply(null, dev.telemetry[1].points) - Math.min.apply(null, dev.telemetry[1].points);
+      pulseBuf.b = jit(pulseBuf.b, range1 * 0.25 || 1);
+      var sp1 = $("#tp-spark-1"), vl1 = $("#tp-val-1");
+      if (sp1) sp1.innerHTML = spark(pulseBuf.b, CAT[dev.category].color, 44);
+      if (vl1) vl1.textContent = pulseBuf.b[pulseBuf.b.length - 1].toFixed(dev.telemetry[1].decimals == null ? 1 : dev.telemetry[1].decimals);
+    }
+  }, 2600);
+
+  setInterval(function () {
+    if (S.view !== "overview") return;
+    S.pulseIdx++;
+    var wrap = $("#tele-wrap");
+    if (wrap) wrap.innerHTML = telePanel(filteredDevices());
+  }, 5200);
+
+  render();
+})();
+</script>
+</body>
+</html>

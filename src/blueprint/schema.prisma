@@ -1,0 +1,253 @@
+// =====================================================================
+//  ElectroCare — PostgreSQL schema (Prisma ORM)
+//  apps/api/prisma/schema.prisma
+//  - Relational core + JSONB for dynamic per-category specifications
+//  - UsageTelemetry partitioned by month (pg_partman) on `recordedAt`
+// =====================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------
+//  Tenancy & users
+// ---------------------------------------------------------------------
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  plan      String   @default("personal") // personal | commercial | industrial
+  users     User[]
+  devices   Device[]
+  createdAt DateTime @default(now())
+}
+
+model User {
+  id            String  @id @default(cuid())
+  tenantId      String
+  tenant        Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  email         String  @unique
+  passwordHash  String
+  pushTokens    String[]
+  whatsapp      String?
+  calendarUrl   String? // CalDAV / ICS endpoint for sync
+  rules         NotificationRule[]
+  createdAt     DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------
+//  Categories — JSONB `specSchema` describes the dynamic fields each
+//  category tracks (battery cycles, compressor hours, vibration…), so
+//  Device.specs stays schemaless but validated at the API layer.
+// ---------------------------------------------------------------------
+
+model Category {
+  id          String   @id @default(cuid())
+  slug        String   @unique // portable | hvac | it | industrial
+  label       String
+  icon        String
+  accentColor String
+  specSchema  Json // JSON-Schema describing allowed Device.specs keys
+  defaultSchedules Json // suggested MaintenanceSchedule templates
+  devices     Device[]
+}
+
+model Device {
+  id                String      @id @default(cuid())
+  tenantId          String
+  tenant            Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  categoryId        String
+  category          Category    @relation(fields: [categoryId], references: [id])
+  name              String
+  brand             String
+  serial            String
+  imei              String?
+  location          String?
+  status            DeviceStatus @default(ACTIVE)
+  purchaseDate      DateTime
+  purchaseCost      Decimal     @db.Decimal(12, 2)
+  currency          String      @default("USD")
+  expectedLifeYears Int         @default(8)
+
+  // Dynamic, category-aware attributes (SOH, run-hours, power factor…)
+  specs             Json        @default("{}")
+
+  policies          WarrantyPolicy[]
+  documents         Document[]
+  maintenanceLogs   MaintenanceLog[]
+  telemetry         UsageTelemetry[]
+  claims            ServiceClaim[]
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([tenantId, categoryId])
+  @@index([serial])
+}
+
+enum DeviceStatus {
+  ACTIVE
+  IN_SERVICE
+  DORMANT
+  RETIRED
+}
+
+// ---------------------------------------------------------------------
+//  Warranty / guarantee coverage
+// ---------------------------------------------------------------------
+
+model WarrantyPolicy {
+  id              String    @id @default(cuid())
+  deviceId        String
+  device          Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  provider        String // OEM, retailer, insurer…
+  policyNumber    String?
+  standardMonths  Int
+  extendedMonths  Int       @default(0)
+  startDate       DateTime
+  endDate         DateTime
+  terms           Json      @default("{}") // deductible, covered components…
+  documentId      String?   @unique
+  document        Document? @relation("policyDocument", fields: [documentId], references: [id])
+
+  @@index([endDate]) // nightly Redis ZSET hydration scans expiring rows
+}
+
+// ---------------------------------------------------------------------
+//  Encrypted document vault (S3/GCS + KMS envelope encryption)
+// ---------------------------------------------------------------------
+
+model Document {
+  id          String   @id @default(cuid())
+  deviceId    String?
+  device      Device?  @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  kind        DocKind
+  title       String
+  s3Key       String   @unique // s3://electrocare-vault/{tenant}/{docId}.enc
+  kmsKeyId    String // envelope DEK reference
+  sha256      String // integrity check on decrypt
+  sizeBytes   Int
+  mime        String
+  ocrPayload  Json? // structured ExtractedReceipt output from the parser λ
+  uploadedBy  String
+  policy      WarrantyPolicy?
+  createdAt   DateTime @default(now())
+
+  @@index([deviceId, kind])
+}
+
+enum DocKind {
+  INVOICE
+  WARRANTY_CARD
+  MANUAL
+  SERVICE_REPORT
+  INSURANCE
+  CLAIM_FORM
+}
+
+// ---------------------------------------------------------------------
+//  Maintenance & repairs
+// ---------------------------------------------------------------------
+
+model MaintenanceLog {
+  id                    String   @id @default(cuid())
+  deviceId              String
+  device                Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  performedAt           DateTime
+  provider              String
+  technicianNotes       String?
+  action                String
+  partsReplaced         String[]
+  cost                  Decimal  @db.Decimal(12, 2)
+  warrantyOnPartsMonths Int?
+  scheduleId            String? // links to the schedule rule it satisfied
+  runtimeHoursAtService Int? // for runtime-based intervals
+
+  @@index([deviceId, performedAt])
+}
+
+// ---------------------------------------------------------------------
+//  Telemetry — hypertable (TimescaleDB) or pg_partman monthly partition
+// ---------------------------------------------------------------------
+
+model UsageTelemetry {
+  id          String   @id @default(cuid())
+  deviceId    String
+  device      Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  metric      String // soh_pct | runtime_hours | vibration_mms | uptime_pct…
+  value       Float
+  unit        String
+  recordedAt  DateTime @default(now())
+
+  @@index([deviceId, metric, recordedAt])
+}
+
+// ---------------------------------------------------------------------
+//  Notification rules & dispatch log (Redis ZSET drives scheduling)
+// ---------------------------------------------------------------------
+
+model NotificationRule {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventKind     EventKind
+  channels      Channel[]
+  leadDays      Int[] // [60, 30, 7, 0]
+  quietHours    Json?
+  active        Boolean  @default(true)
+
+  @@unique([userId, eventKind])
+}
+
+enum EventKind {
+  WARRANTY_EXPIRY
+  SERVICE_DUE
+  HEALTH_DROP
+}
+
+enum Channel {
+  PUSH
+  EMAIL
+  WHATSAPP
+  CALENDAR
+}
+
+model AlertEvent {
+  id         String    @id @default(cuid())
+  tenantId   String
+  deviceId   String
+  kind       EventKind
+  severity   Severity
+  payload    Json
+  channels   Channel[]
+  dispatchedAt DateTime @default(now())
+  readAt     DateTime?
+}
+
+enum Severity {
+  CRITICAL
+  WARNING
+  NOTICE
+}
+
+// ---------------------------------------------------------------------
+//  Claims
+// ---------------------------------------------------------------------
+
+model ServiceClaim {
+  id             String   @id @default(cuid())
+  deviceId       String
+  device         Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  reference      String   @unique // EC-XXXXXX
+  issueSummary   String
+  documentIds    String[]
+  status         String   @default("draft") // draft | submitted | acknowledged | settled | rejected
+  pdfS3Key       String?
+  submittedAt    DateTime?
+  createdAt      DateTime @default(now())
+}
